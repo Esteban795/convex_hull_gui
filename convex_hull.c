@@ -5,6 +5,7 @@
 #define WIDTH 1280
 #define HEIGHT 700
 
+SDL_Color white = {255, 255, 255, 255};
 
 struct point {
     int x;  
@@ -89,7 +90,7 @@ point* adapt_coordinates(point* points,int n,int xmin,int ymin,int xmax,int ymax
     int h_ratio = 1 + rect_height / HEIGHT;
     point* resized_points = malloc(sizeof(point) * n);
     for (int i = 0; i < n;i++){
-        point p = {.x = points[i].x / w_ratio, .y = points[i].y / h_ratio};
+        point p = {.x = 10 + points[i].x / w_ratio, .y = 10 + points[i].y / h_ratio};
         resized_points[i] = p;
     }
     free(points);
@@ -141,6 +142,13 @@ void DrawCircle(SDL_Renderer * renderer, int32_t centreX, int32_t centreY, int32
    }
 }
 
+void draw_points(SDL_Renderer* renderer,SDL_Color color,point* points,int n){
+    for (int i = 0; i < n;i++){
+        DrawCircle(renderer,points[i].x,points[i].y,10);
+        SDL_RenderPresent(renderer);
+        SDL_Delay(100);
+    }
+}
 ////
 
 int main(int argc,char* argv[]){
@@ -160,19 +168,16 @@ int main(int argc,char* argv[]){
         free(resized_points);
         return EXIT_FAILURE;
     };
-    printf("Point 0 : (%d,%d)\n",resized_points[0].x,resized_points[0].y);
+    //printf("Point 0 : (%d,%d)\n",resized_points[0].x,resized_points[0].y);
     SDL_SetRenderDrawColor(renderer,255,255,255,255);
-    DrawCircle(renderer,resized_points[0].x,resized_points[0].y,10);
-    SDL_RenderPresent(renderer);
+    draw_points(renderer,white,resized_points,n);
     SDL_Delay(5000);
 
     //destroy part
     if (renderer != NULL) SDL_DestroyRenderer(renderer);
     if  (window != NULL) SDL_DestroyWindow(window);
-    SDL_Quit();
     free(resized_points);
     return EXIT_SUCCESS;
-    
 }
 
 

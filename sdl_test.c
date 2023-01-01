@@ -1,4 +1,4 @@
-#include <SDL2/SDL.h>
+#include "SDL.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "SDL_utilities/drawers.c"
@@ -88,3 +88,4 @@ void sdl_ellipse(SDL_Renderer* r, int x0, int y0, int radiusX, int radiusY){
         SDL_RenderDrawLine(r, x0 + x, y0 + y,    x0 + x1, y0 + y1 );//quadrant BR
     }
 }
+// gcc sdl_test.c $(sdl2-config --cflags --libs) -o sdl_test
