@@ -133,13 +133,14 @@ point* build_arr(FILE* f,int n){
 
 /// drawers/
 
-void DrawCircle(SDL_Renderer * renderer, int32_t centreX, int32_t centreY, int32_t radius){
+void DrawCircle(SDL_Renderer * renderer, int32_t centreX, int32_t centreY, int32_t radius,SDL_Color color){
    const int32_t diameter = (radius * 2);
    int32_t x = (radius - 1);
    int32_t y = 0;
    int32_t tx = 1;
    int32_t ty = 1;
    int32_t error = (tx - diameter);
+   SDL_SetRenderDrawColor(renderer,color.r,color.g,color.b,color.a);
    while (x >= y){
       //  Each of the following renders an octant of the circle
       SDL_RenderDrawPoint(renderer, centreX + x, centreY - y);
@@ -166,7 +167,7 @@ void DrawCircle(SDL_Renderer * renderer, int32_t centreX, int32_t centreY, int32
 void draw_points(SDL_Renderer* renderer,SDL_Color color,point* points,int n,int radius){
     SDL_SetRenderDrawColor(renderer,color.r,color.g,color.b,color.a);
     for (int i = 0; i < n;i++){
-        DrawCircle(renderer,points[i].x,points[i].y,radius);
+        DrawCircle(renderer,points[i].x,points[i].y,radius,white);
         SDL_RenderPresent(renderer);
         SDL_Delay(50);
     }
@@ -236,80 +237,18 @@ Returns its index in 'points' array.
 int find_pivot(point* points,int n,SDL_Renderer* renderer,int radius){ //lexical order with (y,x) ok
     int index = 0;
     point minimum = points[0];
-    SDL_SetRenderDrawColor(renderer,255,0,0,255);
     for (int i = 0; i < n;i++){
-        if (comp(minimum,points[i])) {
-            minimum = points[i];
+        DrawCircle(renderer,points[i].x,points[i].y,radius,blue);
+        if (points[i].y < minimum.y || (points[i].y == minimum.y && points[i].x < minimum.y)){
+            SDL_Delay(200);
+            DrawCircle(renderer,minimum.x,minimum.y,radius,white);
             index = i;
+            minimum = points[i];
+            DrawCircle(renderer,minimum.x,minimum.y,radius,green);
         }
+        DrawCircle(renderer,points[i].x,points[i].y,radius,white);
     }
-    SDL_Delay(2000);
-    DrawCircle(renderer,points[index].x,points[index].y,radius);
-    SDL_RenderPresent(renderer);
     return index;
-}
-
-point* remove_same_angle_points(point* points,int n,int* new_len){
-    int nb_same_angle = 0;
-    for (int i = 1; i < n - 1;i++){ //first, check for the number of points that are colinear
-        if (orientation(pivot,points[i],points[i+1]) == 0){
-            nb_same_angle++;
-        }
-    }
-    int m = 1;
-    *new_len = n - nb_same_angle;
-    point* new_points = malloc(sizeof(point) * (*new_len));
-    for (int i = 1; i < n ;i++){
-        while (i < n - 1 && orientation(pivot,points[i],points[i+ 1]) == 0){
-            i++;
-        }
-        new_points[m] = points[i];
-        m++;
-    }
-    free(points);
-    return new_points;
-}
-
-result graham_scan(point* points,int n,int radius,SDL_Renderer* renderer){
-    int piv = find_pivot(points,n,renderer,radius);
-    pivot = points[piv];
-    swap(points,0,piv);
-    qsort(points,n,sizeof(point),compare);
-    //We now need to remove points that have the same angle, and only keep the farthest from pivot ones.
-    int new_len;
-    point* unique_angle_points = remove_same_angle_points(points,n,&new_len);
-    unique_angle_points[0] = pivot;
-    stack* s = stack_new();
-    stack_push(s,0);
-    stack_push(s,1);
-    stack_push(s,2);
-    for (int i = 3; i < new_len;i++){
-        SDL_SetRenderDrawColor(renderer,0,255,0,128);
-        while (s->len > 1 && orientation(unique_angle_points[stack_peek_second(s)],unique_angle_points[stack_peek(s)],unique_angle_points[i]) != 2) {
-            /*DrawCircle(renderer,unique_angle_points[stack_peek_second(s)].x,unique_angle_points[stack_peek_second(s)].y,radius);
-            DrawCircle(renderer,unique_angle_points[i].x,unique_angle_points[i].y,radius);
-            DrawCircle(renderer,unique_angle_points[stack_peek(s)].x,unique_angle_points[stack_peek(s)].y,radius);
-            SDL_RenderPresent(renderer);
-            SDL_Delay(200);*/
-            int ind = stack_pop(s);
-            /*SDL_SetRenderDrawColor(renderer,255,255,255,255);
-            DrawCircle(renderer,unique_angle_points[ind].x,unique_angle_points[ind].y,radius);
-            SDL_RenderPresent(renderer);*/
-        }
-        stack_push(s,i);
-    }
-    int* indexes = stack_to_arr(s);
-    point* convex_hull = malloc(sizeof(point) * s->len);
-    for (int i = 0; i < s->len;i++){
-        convex_hull[i] = unique_angle_points[i];
-    }
-    //result res = {.arr = convex_hull,.len=s->len};
-    free(unique_angle_points);
-    free(indexes);
-    free_stack(s);
-
-    result res = {.arr = NULL,.len = 0};
-    return res;
 }
 
 
@@ -323,22 +262,22 @@ int main(int argc,char* argv[]){
     point* points = build_arr(in_f,n);
     fclose(in_f);
     int xmin,xmax,ymin,ymax;
-    int radius;
+    int radius = 10;
     container_rect(points,n,&xmin,&xmax,&ymin,&ymax);
-    point* resized_points = adapt_coordinates(points,n,xmin,ymin,xmax,ymax,&radius);
+    //point* resized_points = adapt_coordinates(points,n,xmin,ymin,xmax,ymax,&radius);
     SDL_Window* window;
     SDL_Renderer* renderer;
     int status = start_SDL(&window,&renderer,WIDTH,HEIGHT,"Graham scan algorithm, animated by Esteban795.");
     if (status == 1) {
-        free(resized_points);
+        free(points);
         return EXIT_FAILURE;
     };
     //printf("Point 0 : (%d,%d)\n",resized_points[0].x,resized_points[0].y);
     SDL_SetRenderDrawColor(renderer,255,255,255,255);
-    draw_points(renderer,white,resized_points,n,radius);
+    draw_points(renderer,white,points,n,radius);
 
-    int pivot = find_pivot(resized_points,n,renderer,radius);
-    printf("Pivot at (%d,%d)\n",resized_points[pivot].x,resized_points[pivot].y);
+    int pivot = find_pivot(points,n,renderer,radius);
+    printf("Pivot at (%d,%d)\n",points[pivot].x,points[pivot].y);
     SDL_Delay(10000);
     
     //result test = graham_scan(resized_points,n,radius,renderer);
@@ -347,7 +286,7 @@ int main(int argc,char* argv[]){
     //destroy part
     if (renderer != NULL) SDL_DestroyRenderer(renderer);
     if  (window != NULL) SDL_DestroyWindow(window);
-    free(resized_points);
+    free(points);
     return EXIT_SUCCESS;
 }
 
