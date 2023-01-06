@@ -7,13 +7,6 @@
 #define WIDTH 1100
 #define HEIGHT 700
 
-struct point {
-    int x;  
-    int y;
-};
-
-typedef struct point point;
-
 /*
 Animation of how Graham Scan algorithm actually works behind the scenes.
 Make sure the file you're passing as an argument has the following pattern : 
@@ -29,6 +22,22 @@ xn yn
 
 Not respecting this format will result in undefined behaviour.
 */
+struct point {
+    int x;  
+    int y;
+};
+
+typedef struct point point;
+
+point pivot;
+
+
+struct result {
+    point* arr;
+    int len;
+};
+
+typedef struct result result;
 
 
 SDL_Color orange = {255, 127, 40, 255};
@@ -173,20 +182,25 @@ void draw_points(SDL_Renderer* renderer,SDL_Color color,point* points,int n,int 
     }
 }
 
-point pivot;
-
-
-struct result {
-    point* arr;
-    int len;
-};
-
-typedef struct result result;
+//////////////////////////
 
 void swap(point* points,int i, int j){
     point temp = points[i];
     points[i] = points[j];
     points[j] = temp;
+}
+
+int dist(point A,point B){
+    return (A.x - B.x) * (A.x - B.x) + (A.y - B.y)* (A.y - B.y);
+}
+
+bool comp(point A,point B){//lexical order with (y,x) coordinates
+    if (A.y < B.y) {
+        return false;
+    } else if (A.y == B.y && B.x > A.x){
+        return false;
+    }
+    return true;
 }
 
 /* Find the orientation between 3 points.
@@ -197,18 +211,14 @@ void swap(point* points,int i, int j){
 int orientation(point A,point B, point C){
     int res = ((B.y - A.y) * (C.x - B.x) - (B.x - A.x) * (C.y - B.y));
     if (res == 0) return 0;
-    if (res > 0) return 2;
-    if (res < 0) return 1;
-}
-
-int dist(point A,point B){
-    return (A.x - B.x) * (A.x - B.x) + (A.y - B.y)* (A.y - B.y);
+    if (res > 0) return 1;
+    if (res < 0) return 2;
 }
 
 /*
 Sorts an array of points with respect to the first point.
 */
-int compare(const void* A,const void* B){ 
+int compare_qsort(const void* A,const void* B){ 
     point a = *(point*)A;
     point b = *(point*)B;
     int o = orientation(pivot,a,b);
@@ -221,14 +231,7 @@ int compare(const void* A,const void* B){
 }
 
 
-bool comp(point A,point B){//lexical order with (y,x) coordinates
-    if (A.y < B.y) {
-        return false;
-    } else if (A.y == B.y && B.x > A.x){
-        return false;
-    }
-    return true;
-}
+
 
 /*
 Searches for point with minimal value with respect to (y,x) lexical order.
@@ -237,22 +240,95 @@ Returns its index in 'points' array.
 int find_pivot(point* points,int n,SDL_Renderer* renderer,int radius){ //lexical order with (y,x) ok
     int index = 0;
     point minimum = points[0];
-    for (int i = 0; i < n;i++){
-        DrawCircle(renderer,points[i].x,points[i].y,radius,blue);
+    for (int i = 1; i < n;i++){
         if (points[i].y < minimum.y || (points[i].y == minimum.y && points[i].x < minimum.y)){
-            SDL_Delay(200);
-            DrawCircle(renderer,minimum.x,minimum.y,radius,white);
             index = i;
             minimum = points[i];
-            DrawCircle(renderer,minimum.x,minimum.y,radius,green);
         }
-        DrawCircle(renderer,points[i].x,points[i].y,radius,white);
     }
+    DrawCircle(renderer,minimum.x,minimum.y,radius,green);
+    SDL_RenderPresent(renderer);
     return index;
 }
 
+/*
+Modify points array to keep only points that form a unique angle with pivot
+*/
+int remove_same_angle_points(point* points,int n){
+    int new_len = 1;
+    for (int i = 1; i < n ;i++){
+        while (i < n - 1 && orientation(pivot,points[i],points[i+ 1]) == 0){
+            i++;
+        }
+        points[new_len] = points[i];
+        new_len++;
+    }
+    return new_len;
+}
 
-////
+
+int apply_effect_on_condition(stack* s,SDL_Renderer* renderer,point* points,int i){
+    point top = points[stack_peek(s)];
+    point next_to_top = points[stack_peek_second(s)];
+    /*SDL_SetRenderDrawColor(renderer,orange.r,orange.g,orange.b,orange.a);
+    SDL_RenderDrawLine(renderer,top.x,top.y,next_to_top.x,next_to_top.y);
+    SDL_RenderDrawLine(renderer,next_to_top.x,next_to_top.y,points[i].x,points[i].y);
+    SDL_RenderPresent(renderer);
+    */
+    return orientation(next_to_top,top,points[i]);
+}
+
+
+result graham_scan(point* points,int n,SDL_Renderer* renderer,int radius){
+    int piv = find_pivot(points,n,renderer,radius);
+    printf("Pivot en (%d,%d)",points[piv].x,points[piv].y);
+    SDL_Delay(5000);
+    pivot = points[piv];
+    swap(points,0,piv);
+    qsort(points,n,sizeof(point),compare_qsort);
+    //We now need to remove points that have the same angle, and only keep the farthest from pivot ones.
+    int new_len = remove_same_angle_points(points,n);
+    stack* s = stack_new();
+    stack_push(s,0);
+    stack_push(s,1);
+    stack_push(s,2);
+    point top;
+    point next_to_top;
+    for (int i = 3; i < new_len;i++){
+        /*SDL_Delay(1000);
+        SDL_RenderPresent(renderer);*/
+        while (s->len > 1 && apply_effect_on_condition(s,renderer,points,i) != 2) {
+            /*SDL_Delay(1000);
+            top = points[stack_peek(s)];
+            next_to_top = points[stack_peek_second(s)];
+            SDL_SetRenderDrawColor(renderer,0,0,0,255);
+            SDL_RenderDrawLine(renderer,top.x,top.y,next_to_top.x,next_to_top.y);
+            SDL_RenderDrawLine(renderer,next_to_top.x,next_to_top.y,points[i].x,points[i].y);
+            SDL_RenderPresent(renderer);*/
+            stack_pop(s);
+        }
+        stack_push(s,i);
+    }
+    int* indexes = stack_to_arr(s);
+    point* convex_hull = malloc(sizeof(point) * s->len);
+    for (int i = 0; i < s->len;i++){
+        convex_hull[i] = points[indexes[i]];
+    }
+    DrawCircle(renderer,pivot.x,pivot.y,radius,green);
+    draw_points(renderer,white,points + 1,n - 1,radius);
+    SDL_SetRenderDrawColor(renderer,orange.r,orange.g,orange.b,orange.a);
+    for (int i = 0; i < s->len - 1;i++){
+        SDL_RenderDrawLine(renderer,convex_hull[i].x,convex_hull[i].y,convex_hull[i + 1].x,convex_hull[i + 1].y);
+        SDL_RenderPresent(renderer);
+        SDL_Delay(1000);
+    }
+    SDL_RenderDrawLine(renderer,convex_hull[0].x,convex_hull[0].y,convex_hull[s->len - 1].x,convex_hull[s->len - 1].y);
+    SDL_RenderPresent(renderer);
+    result res = {.arr = convex_hull,.len=s->len};
+    free(indexes);
+    free_stack(s);
+    return res;
+}
 
 int main(int argc,char* argv[]){
     if (argc != 2) return EXIT_FAILURE;
@@ -262,7 +338,7 @@ int main(int argc,char* argv[]){
     point* points = build_arr(in_f,n);
     fclose(in_f);
     int xmin,xmax,ymin,ymax;
-    int radius = 10;
+    int radius = 5;
     container_rect(points,n,&xmin,&xmax,&ymin,&ymax);
     //point* resized_points = adapt_coordinates(points,n,xmin,ymin,xmax,ymax,&radius);
     SDL_Window* window;
@@ -271,13 +347,12 @@ int main(int argc,char* argv[]){
     if (status == 1) {
         free(points);
         return EXIT_FAILURE;
-    };
+    }
     //printf("Point 0 : (%d,%d)\n",resized_points[0].x,resized_points[0].y);
     SDL_SetRenderDrawColor(renderer,255,255,255,255);
     draw_points(renderer,white,points,n,radius);
 
-    int pivot = find_pivot(points,n,renderer,radius);
-    printf("Pivot at (%d,%d)\n",points[pivot].x,points[pivot].y);
+    result res = graham_scan(points,n,renderer,radius);
     SDL_Delay(10000);
     
     //result test = graham_scan(resized_points,n,radius,renderer);
@@ -287,6 +362,7 @@ int main(int argc,char* argv[]){
     if (renderer != NULL) SDL_DestroyRenderer(renderer);
     if  (window != NULL) SDL_DestroyWindow(window);
     free(points);
+    free(res.arr);
     return EXIT_SUCCESS;
 }
 
