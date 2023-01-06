@@ -183,7 +183,7 @@ void draw_points(SDL_Renderer* renderer,SDL_Color color,point* points,int n,int 
     for (int i = 0; i < n;i++){
         DrawCircle(renderer,points[i].x,points[i].y,radius,white);
         SDL_RenderPresent(renderer);
-        SDL_Delay(50);
+        SDL_Delay(5);
     }
 }
 
@@ -275,21 +275,14 @@ int remove_same_angle_points(point* points,int n){
 int apply_effect_on_condition(stack* s,SDL_Renderer* renderer,point* points,int i){
     point top = points[stack_peek(s)];
     point next_to_top = points[stack_peek_second(s)];
-    printf("On considère les points : \n");
-    print_point(next_to_top,stack_peek_second(s));
-    print_point(top,stack_peek(s));
-    print_point(points[i],i);
-    
     SDL_SetRenderDrawColor(renderer,blue.r,blue.g,blue.b,blue.a);
     SDL_RenderDrawLine(renderer,top.x,top.y,points[i].x,points[i].y);
     SDL_RenderDrawLine(renderer,top.x,top.y,next_to_top.x,next_to_top.y);
     SDL_RenderPresent(renderer);
     int o = orientation(next_to_top,top,points[i]);
-    SDL_Delay(1000);
     if (o != 2){
-        printf("mauvais sens");
         SDL_SetRenderDrawColor(renderer,0,0,0,255);
-        SDL_Delay(200);
+        SDL_Delay(25);
         SDL_RenderDrawLine(renderer,top.x,top.y,next_to_top.x,next_to_top.y);
         SDL_RenderDrawLine(renderer,points[i].x,points[i].y,top.x,top.y);
         SDL_RenderPresent(renderer);
@@ -301,13 +294,10 @@ int apply_effect_on_condition(stack* s,SDL_Renderer* renderer,point* points,int 
 
 result graham_scan(point* points,int n,SDL_Renderer* renderer,int radius){
     int piv = find_pivot(points,n,renderer,radius);
-    printf("Pivot en (%d,%d)\n",points[piv].x,points[piv].y);
     SDL_Delay(1000);
     pivot = points[piv];
     swap(points,0,piv);
     qsort(points,n,sizeof(point),compare_qsort);
-    print_points_arr(points,n);
-    printf("\n\n\n");
     //We now need to remove points that have the same angle, and only keep the farthest from pivot ones.
     int new_len = remove_same_angle_points(points,n);
     stack* s = stack_new();
@@ -323,7 +313,6 @@ result graham_scan(point* points,int n,SDL_Renderer* renderer,int radius){
         SDL_RenderDrawLine(renderer,points[stack_peek(s)].x,points[stack_peek(s)].y,points[i].x,points[i].y);
         SDL_RenderPresent(renderer);
         stack_push(s,i);
-        SDL_Delay(1000);
     }
     int* indexes = stack_to_arr(s);
     point* convex_hull = malloc(sizeof(point) * s->len);
@@ -334,9 +323,10 @@ result graham_scan(point* points,int n,SDL_Renderer* renderer,int radius){
     draw_points(renderer,white,points + 1,n - 1,radius);
     SDL_SetRenderDrawColor(renderer,orange.r,orange.g,orange.b,orange.a);
     for (int i = 0; i < s->len - 1;i++){
+        DrawCircle(renderer,convex_hull[i].x,convex_hull[i].y,radius,green);
         SDL_RenderDrawLine(renderer,convex_hull[i].x,convex_hull[i].y,convex_hull[i + 1].x,convex_hull[i + 1].y);
         SDL_RenderPresent(renderer);
-        SDL_Delay(1000);
+        SDL_Delay(200);
     }
     SDL_RenderDrawLine(renderer,convex_hull[0].x,convex_hull[0].y,convex_hull[s->len - 1].x,convex_hull[s->len - 1].y);
     SDL_RenderPresent(renderer);
@@ -356,7 +346,7 @@ int main(int argc,char* argv[]){
     FILE* in_f = fopen(argv[1],"r");
     point* points = build_arr(in_f,&n);
     fclose(in_f);
-    int radius = 5;
+    int radius = 2;
     bounding_box(points,n,&xmin,&xmax,&ymin,&ymax);
     //point* resized_points = adapt_coordinates(points,n,xmin,ymin,xmax,ymax,&radius);
 
