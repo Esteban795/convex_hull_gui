@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include "stack.c"
 
-#define WIDTH 1100
-#define HEIGHT 700
+#define WIDTH 1500
+#define HEIGHT 1000
 
 /*
 Animation of how Graham Scan algorithm actually works behind the scenes.
@@ -86,6 +86,10 @@ void print_points_arr(point* points, int n){
         printf("Point (%d,%d)\n",points[i].x,points[i].y);
     }
 }
+
+void print_point(point p,int i){
+    printf("Point %i : (%d,%d)\n",i,p.x,p.y);
+}
 /////
 
 
@@ -93,7 +97,7 @@ void print_points_arr(point* points, int n){
 /*
 Gives xmin,ymin, xmax,ymax coordinates of a bounding rectangle (generally not the minimal one)
 */
-void container_rect(point* points,int n,int* xmin,int* xmax,int* ymin,int* ymax){
+void bounding_box(point* points,int n,int* xmin,int* xmax,int* ymin,int* ymax){
     *xmin = points[0].x;
     *xmax = points[0].x;
     *ymin = points[0].y;
@@ -127,11 +131,12 @@ point* adapt_coordinates(point* points,int n,int xmin,int ymin,int xmax,int ymax
     return resized_points;
 }
 
-point* build_arr(FILE* f,int n){
-    point* points = malloc(n * sizeof(point));
+point* build_arr(FILE* f,int* n){
+    fscanf(f,"%d\n",n);
+    point* points = malloc(*n * sizeof(point));
     int temp_x,temp_y;
-    for (int i = 0; i < n;i++){
-        fscanf(f,"%d %d\n",&temp_x,&temp_y);
+    for (int i = 0; i < *n;i++){
+        fscanf(f,"%d;%d\n",&temp_x,&temp_y);
         point p = {.x = temp_x,.y = temp_y};
         points[i] = p;
     }
@@ -270,22 +275,39 @@ int remove_same_angle_points(point* points,int n){
 int apply_effect_on_condition(stack* s,SDL_Renderer* renderer,point* points,int i){
     point top = points[stack_peek(s)];
     point next_to_top = points[stack_peek_second(s)];
-    /*SDL_SetRenderDrawColor(renderer,orange.r,orange.g,orange.b,orange.a);
+    printf("On considère les points : \n");
+    print_point(next_to_top,stack_peek_second(s));
+    print_point(top,stack_peek(s));
+    print_point(points[i],i);
+    
+    SDL_SetRenderDrawColor(renderer,blue.r,blue.g,blue.b,blue.a);
+    SDL_RenderDrawLine(renderer,top.x,top.y,points[i].x,points[i].y);
     SDL_RenderDrawLine(renderer,top.x,top.y,next_to_top.x,next_to_top.y);
-    SDL_RenderDrawLine(renderer,next_to_top.x,next_to_top.y,points[i].x,points[i].y);
     SDL_RenderPresent(renderer);
-    */
-    return orientation(next_to_top,top,points[i]);
+    int o = orientation(next_to_top,top,points[i]);
+    SDL_Delay(1000);
+    if (o != 2){
+        printf("mauvais sens");
+        SDL_SetRenderDrawColor(renderer,0,0,0,255);
+        SDL_Delay(200);
+        SDL_RenderDrawLine(renderer,top.x,top.y,next_to_top.x,next_to_top.y);
+        SDL_RenderDrawLine(renderer,points[i].x,points[i].y,top.x,top.y);
+        SDL_RenderPresent(renderer);
+    }
+    printf("\n\n\n");
+    return o;
 }
 
 
 result graham_scan(point* points,int n,SDL_Renderer* renderer,int radius){
     int piv = find_pivot(points,n,renderer,radius);
-    printf("Pivot en (%d,%d)",points[piv].x,points[piv].y);
-    SDL_Delay(5000);
+    printf("Pivot en (%d,%d)\n",points[piv].x,points[piv].y);
+    SDL_Delay(1000);
     pivot = points[piv];
     swap(points,0,piv);
     qsort(points,n,sizeof(point),compare_qsort);
+    print_points_arr(points,n);
+    printf("\n\n\n");
     //We now need to remove points that have the same angle, and only keep the farthest from pivot ones.
     int new_len = remove_same_angle_points(points,n);
     stack* s = stack_new();
@@ -295,19 +317,13 @@ result graham_scan(point* points,int n,SDL_Renderer* renderer,int radius){
     point top;
     point next_to_top;
     for (int i = 3; i < new_len;i++){
-        /*SDL_Delay(1000);
-        SDL_RenderPresent(renderer);*/
         while (s->len > 1 && apply_effect_on_condition(s,renderer,points,i) != 2) {
-            /*SDL_Delay(1000);
-            top = points[stack_peek(s)];
-            next_to_top = points[stack_peek_second(s)];
-            SDL_SetRenderDrawColor(renderer,0,0,0,255);
-            SDL_RenderDrawLine(renderer,top.x,top.y,next_to_top.x,next_to_top.y);
-            SDL_RenderDrawLine(renderer,next_to_top.x,next_to_top.y,points[i].x,points[i].y);
-            SDL_RenderPresent(renderer);*/
             stack_pop(s);
         }
+        SDL_RenderDrawLine(renderer,points[stack_peek(s)].x,points[stack_peek(s)].y,points[i].x,points[i].y);
+        SDL_RenderPresent(renderer);
         stack_push(s,i);
+        SDL_Delay(1000);
     }
     int* indexes = stack_to_arr(s);
     point* convex_hull = malloc(sizeof(point) * s->len);
@@ -332,31 +348,29 @@ result graham_scan(point* points,int n,SDL_Renderer* renderer,int radius){
 
 int main(int argc,char* argv[]){
     if (argc != 2) return EXIT_FAILURE;
-    int n;
-    FILE* in_f = fopen(argv[1],"r");
-    fscanf(in_f,"%d\n",&n); // number of points
-    point* points = build_arr(in_f,n);
-    fclose(in_f);
-    int xmin,xmax,ymin,ymax;
-    int radius = 5;
-    container_rect(points,n,&xmin,&xmax,&ymin,&ymax);
-    //point* resized_points = adapt_coordinates(points,n,xmin,ymin,xmax,ymax,&radius);
+    int n; //number of points
+    int xmin,xmax,ymin,ymax; // will be used to determine a bounding box.
     SDL_Window* window;
     SDL_Renderer* renderer;
+
+    FILE* in_f = fopen(argv[1],"r");
+    point* points = build_arr(in_f,&n);
+    fclose(in_f);
+    int radius = 5;
+    bounding_box(points,n,&xmin,&xmax,&ymin,&ymax);
+    //point* resized_points = adapt_coordinates(points,n,xmin,ymin,xmax,ymax,&radius);
+
     int status = start_SDL(&window,&renderer,WIDTH,HEIGHT,"Graham scan algorithm, animated by Esteban795.");
     if (status == 1) {
         free(points);
         return EXIT_FAILURE;
     }
-    //printf("Point 0 : (%d,%d)\n",resized_points[0].x,resized_points[0].y);
     SDL_SetRenderDrawColor(renderer,255,255,255,255);
     draw_points(renderer,white,points,n,radius);
 
     result res = graham_scan(points,n,renderer,radius);
-    SDL_Delay(10000);
+    SDL_Delay(5000);
     
-    //result test = graham_scan(resized_points,n,radius,renderer);
-    //SDL_Delay(10000);
 
     //destroy part
     if (renderer != NULL) SDL_DestroyRenderer(renderer);
