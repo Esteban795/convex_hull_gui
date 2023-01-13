@@ -5,12 +5,15 @@
 
 const int TEXTURE_H = 2000;
 const int TEXTURE_W = 2000;
-const int SCREEN_H = 1000;
-const int SCREEN_W = 1000;
+const int SCREEN_H = 800;
+const int SCREEN_W = 800;
 
 int rand_between(int l, int r) {
   return (int)( (rand() / (RAND_MAX * 1.0f)) * (r - l) + l);
 }
+
+
+
 SDL_Color orange = {255, 127, 40, 255};
 SDL_Color blue = {20, 20, 200, 255};
 SDL_Color red = {255, 10, 10, 255};
@@ -42,7 +45,7 @@ int main(void){
 
 
 
-    SDL_Rect source = {0,0,SCREEN_W/3,SCREEN_H/32};
+    SDL_Rect source = {0,0,SCREEN_W/32,SCREEN_H/32};
     SDL_Rect dest = {10,10,SCREEN_W - 20,SCREEN_H - 20};
     SDL_Event e;
     SDL_Texture* texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_TARGET,TEXTURE_W,TEXTURE_H);
@@ -52,7 +55,6 @@ int main(void){
         int y = rand_between(0,TEXTURE_H);
         SDL_Point point = {.x = x,.y = y};
         points[i] = point;
-        SDL_RenderDrawPoint(renderer,x,y);
     }
     SDL_RenderPresent(renderer);
     int running = 1;
@@ -63,16 +65,20 @@ int main(void){
                 switch (e.key.keysym.sym)
                 {
                 case SDLK_UP:
+                    if (source.y < -2) break;
                     source.y -= 3;
                     break;
                 case SDLK_DOWN:
+                    if (source.y > SCREEN_H + 2) break;
                     source.y += 3;
                     break;
                 case SDLK_LEFT:
-                    source.x -= 3;
+                    if (source.x < -2) break;
+                    source.x -= 5;
                     break;
                 case SDLK_RIGHT:
-                    source.x += 3;
+                    if (source.x > SCREEN_W + 2) break;
+                    source.x += 5;
                     break;
                 case SDLK_1:
                     source.w *= 2;
@@ -90,23 +96,21 @@ int main(void){
         SDL_SetRenderTarget(renderer,texture);
         SDL_SetRenderDrawColor(renderer,255,255,255,255);
         SDL_RenderClear(renderer);
-        /*
+        
         for (int i = 0; i < 1000;i++){
             points[i].x += rand_between(0,4) % 3 - 1;
             points[i].y += rand_between(0,4) % 3 - 1;
-            SDL_RenderDrawPoint(renderer,points[i].x,points[i].y
         }
-        */
-        SDL_SetRenderDrawColor(renderer,0,255,255,255);
+        
+        SDL_SetRenderDrawColor(renderer,0,0,0,255);
         SDL_RenderDrawPoints(renderer,points,1000);
 
         SDL_SetRenderTarget(renderer,NULL);
         SDL_SetRenderDrawColor(renderer,0,0,0,255);
         SDL_RenderCopy(renderer,texture,&source,&dest);
         SDL_RenderPresent(renderer);
-        SDL_Delay(1000);
+        SDL_Delay(50);
     }
-    SDL_Delay(5000);
     free(points);
     /* On agit sur la fenêtre ici */
     Quit:
