@@ -3,9 +3,14 @@
 #include <stdlib.h>
 #include <SDL2/SDL_image.h>
 
-#define WIDTH 400
-#define HEIGHT 400
+const int TEXTURE_H = 2000;
+const int TEXTURE_W = 2000;
+const int SCREEN_H = 1000;
+const int SCREEN_W = 1000;
 
+int rand_between(int l, int r) {
+  return (int)( (rand() / (RAND_MAX * 1.0f)) * (r - l) + l);
+}
 SDL_Color orange = {255, 127, 40, 255};
 SDL_Color blue = {20, 20, 200, 255};
 SDL_Color red = {255, 10, 10, 255};
@@ -13,37 +18,13 @@ SDL_Color green = {10, 255, 10, 255};
 SDL_Color white = {255, 255, 255, 255};
 SDL_Color black = {0, 0, 0, 255};
 
-/*
-void draw_rects(SDL_Renderer* renderer,SDL_Rect* rects,int n){
-    for (int i = 0; i < n;i++){
-        SDL_Color c = {(i + 4) * 10,(i + 4) * 10,(i + 4) * 10,255};
-        SDL_SetRenderDrawColor(renderer,c.r,c.g,c.b,c.a);
-        SDL_RenderDrawRect(renderer,&rects[i]);
-        SDL_RenderFillRect(renderer,&rects[i]);
-    }
-    SDL_RenderPresent(renderer);
-}
-
-SDL_Rect* generate_rects(int n){
-    SDL_Rect* rects = malloc(sizeof(SDL_Rect) * n);
-    for (int i = 0;i < n;i++){
-        SDL_Rect r = {(i + 1)* 20,(i + 1)* 20,(i + 3)* 20,(i + 3)* 20};
-        rects[i] = r;
-    }
-    return rects;
-}
-*/
-
-SDL_Rect camera = {WIDTH/2 - WIDTH/4,HEIGHT/2 - HEIGHT/4,200,200};
-
-int main(int argc, char *argv[]){
-    SDL_Color orange = {255, 127, 40, 255};
+int main(void){
     if(0 != SDL_Init(SDL_INIT_VIDEO)){
         fprintf(stderr, "Erreur SDL_Init : %s", SDL_GetError());
         goto Quit;
     }
     SDL_Window* window= SDL_CreateWindow("SDL2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                              WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
+                              SCREEN_W, SCREEN_H, SDL_WINDOW_SHOWN);
     if(NULL == window){
         fprintf(stderr, "Erreur SDL_CreateWindow : %s", SDL_GetError());
         goto Quit;
@@ -57,45 +38,76 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "Erreur SDL_SetRenderDrawColor : %s", SDL_GetError());
         goto Quit;
     }
+    #include <SDL2/SDL.h>
 
-    int width = 100;
-    int height = 100;
-    int color = 1;
-    SDL_Texture *texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_STREAMING,300,300);
-    SDL_SetRenderTarget(renderer,texture);
-    SDL_SetRenderDrawColor(renderer,255,255,255,255);
-    for (int i = 0; i < 8;i++){
-        for (int j = 0; j < 8;j++){
-            if (color == 1){
-                SDL_SetRenderDrawColor(renderer,0,255,0,255);
-                color = 0;
-            }
-            else {
-                SDL_SetRenderDrawColor(renderer,255,255,255,255);
-                color = 1;
-            }
-            int x = j * 100;
-            int y = i * 100;
-            SDL_Rect r = {x,y,width - 5,height - 5};
-            SDL_RenderFillRect(renderer,&r);
-            
-        } 
-        if (color == 1){
-            SDL_SetRenderDrawColor(renderer,0,0,0,255);
-            color = 0;
-        }
-        else {
-            SDL_SetRenderDrawColor(renderer,255,255,255,255);
-            color = 1;
-        }
+
+
+    SDL_Rect source = {0,0,SCREEN_W/3,SCREEN_H/32};
+    SDL_Rect dest = {10,10,SCREEN_W - 20,SCREEN_H - 20};
+    SDL_Event e;
+    SDL_Texture* texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_TARGET,TEXTURE_W,TEXTURE_H);
+    SDL_Point* points = malloc(sizeof(SDL_Point) * 1000);
+    for (int i = 0; i < 1000;i++){
+        int x = rand_between(0,TEXTURE_W);
+        int y = rand_between(0,TEXTURE_H);
+        SDL_Point point = {.x = x,.y = y};
+        points[i] = point;
+        SDL_RenderDrawPoint(renderer,x,y);
     }
     SDL_RenderPresent(renderer);
-    SDL_Delay(2000);
-    SDL_Rect clip = {10,10,200,200};
-    SDL_Rect position = {150,150,200,200};
-    SDL_RenderCopy(renderer,texture,NULL,&position);
-    SDL_RenderPresent(renderer);
+    int running = 1;
+    while (running){
+        while (SDL_PollEvent(&e)){
+            if (e.type == SDL_QUIT) running = 0;
+            if (e.type == SDL_KEYDOWN) {
+                switch (e.key.keysym.sym)
+                {
+                case SDLK_UP:
+                    source.y -= 3;
+                    break;
+                case SDLK_DOWN:
+                    source.y += 3;
+                    break;
+                case SDLK_LEFT:
+                    source.x -= 3;
+                    break;
+                case SDLK_RIGHT:
+                    source.x += 3;
+                    break;
+                case SDLK_1:
+                    source.w *= 2;
+                    source.h *= 2;
+                    break;
+                case SDLK_2:
+                    source.w /= 2;
+                    source.h /= 2;
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        SDL_SetRenderTarget(renderer,texture);
+        SDL_SetRenderDrawColor(renderer,255,255,255,255);
+        SDL_RenderClear(renderer);
+        /*
+        for (int i = 0; i < 1000;i++){
+            points[i].x += rand_between(0,4) % 3 - 1;
+            points[i].y += rand_between(0,4) % 3 - 1;
+            SDL_RenderDrawPoint(renderer,points[i].x,points[i].y
+        }
+        */
+        SDL_SetRenderDrawColor(renderer,0,255,255,255);
+        SDL_RenderDrawPoints(renderer,points,1000);
+
+        SDL_SetRenderTarget(renderer,NULL);
+        SDL_SetRenderDrawColor(renderer,0,0,0,255);
+        SDL_RenderCopy(renderer,texture,&source,&dest);
+        SDL_RenderPresent(renderer);
+        SDL_Delay(1000);
+    }
     SDL_Delay(5000);
+    free(points);
     /* On agit sur la fenêtre ici */
     Quit:
         if (renderer != NULL) SDL_DestroyRenderer(renderer);
@@ -103,4 +115,4 @@ int main(int argc, char *argv[]){
     return EXIT_SUCCESS;
 }
 
-// gcc sdl_test.c -Wvla -Wall -Wextra -fsanitize=address $(sdl2-config --cflags --libs) -o sdl_test
+//gcc sdl_test.c -o sdl_test -Wall -Wextra -Wvla -fsanitize=address $(sdl2-config --cflags --libs) -lSDL2_image
