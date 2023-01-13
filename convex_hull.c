@@ -3,6 +3,7 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 #include "stack.c"
+#include <SDL2/SDL_image.h>
 
 #define WIDTH 1500
 #define HEIGHT 1000
