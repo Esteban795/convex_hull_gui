@@ -5,21 +5,18 @@
 
 const int TEXTURE_H = 2000;
 const int TEXTURE_W = 2000;
-const int SCREEN_H = 800;
-const int SCREEN_W = 800;
-
-int rand_between(int l, int r) {
-  return (int)( (rand() / (RAND_MAX * 1.0f)) * (r - l) + l);
-}
-
-
-
+const int SCREEN_H = 1000;
+const int SCREEN_W = 1000;
 SDL_Color orange = {255, 127, 40, 255};
 SDL_Color blue = {20, 20, 200, 255};
 SDL_Color red = {255, 10, 10, 255};
 SDL_Color green = {10, 255, 10, 255};
 SDL_Color white = {255, 255, 255, 255};
 SDL_Color black = {0, 0, 0, 255};
+
+int rand_between(int l, int r) {
+  return (int)( (rand() / (RAND_MAX * 1.0f)) * (r - l) + l);
+}
 
 int main(void){
     if(0 != SDL_Init(SDL_INIT_VIDEO)){
@@ -41,16 +38,15 @@ int main(void){
         fprintf(stderr, "Erreur SDL_SetRenderDrawColor : %s", SDL_GetError());
         goto Quit;
     }
-    #include <SDL2/SDL.h>
 
 
 
-    SDL_Rect source = {0,0,SCREEN_W/32,SCREEN_H/32};
+    SDL_Rect source = {0,0,SCREEN_W/8,SCREEN_H/8};
     SDL_Rect dest = {10,10,SCREEN_W - 20,SCREEN_H - 20};
     SDL_Event e;
     SDL_Texture* texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_TARGET,TEXTURE_W,TEXTURE_H);
-    SDL_Point* points = malloc(sizeof(SDL_Point) * 1000);
-    for (int i = 0; i < 1000;i++){
+    SDL_Point* points = malloc(sizeof(SDL_Point) * 10000);
+    for (int i = 0; i < 10000;i++){
         int x = rand_between(0,TEXTURE_W);
         int y = rand_between(0,TEXTURE_H);
         SDL_Point point = {.x = x,.y = y};
@@ -96,11 +92,6 @@ int main(void){
         SDL_SetRenderTarget(renderer,texture);
         SDL_SetRenderDrawColor(renderer,255,255,255,255);
         SDL_RenderClear(renderer);
-        
-        for (int i = 0; i < 1000;i++){
-            points[i].x += rand_between(0,4) % 3 - 1;
-            points[i].y += rand_between(0,4) % 3 - 1;
-        }
         
         SDL_SetRenderDrawColor(renderer,0,0,0,255);
         SDL_RenderDrawPoints(renderer,points,1000);
