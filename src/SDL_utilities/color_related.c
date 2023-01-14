@@ -1,6 +1,4 @@
-#include <SDL2/SDL.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "color_related.h"
 
 
 SDL_Color orange = {255, 127, 40, 255};

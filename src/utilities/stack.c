@@ -1,25 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+#include "stack.h"
 
 //T-type stack implementation, using linked lists.
 // O(1) push and pop. O(n) space complexity
 // here, Ts will be ints because we're just storing array indexes.
-typedef int T;
 
-struct node {
-    T data;
-    struct node* next;
-};
-
-typedef struct node node;
-
-struct stack {
-    int len;
-    node* top;
-};
-
-typedef struct stack stack;
 
 node* new_node(T d){
     node* n = malloc(sizeof(node));
@@ -99,8 +83,8 @@ void stack_print(stack* s){
     print_rec(s->top);
 }
 
-int* stack_to_arr(stack* s){
-    int* arr = malloc(sizeof(int) * s->len);
+T* stack_to_arr(stack* s){
+    T* arr = malloc(sizeof(int) * s->len);
     stack* c = stack_copy(s);
     for (int i = 0; i < s->len;i++){
         arr[i] = stack_pop(c);
