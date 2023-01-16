@@ -4,17 +4,19 @@
 /*
 Gives xmin,ymin, xmax,ymax coordinates of a bounding rectangle (generally not the minimal one).
 */
-void bounding_box(SDL_Point* points,int n,int* xmin,int* xmax,int* ymin,int* ymax){
-    *xmin = points[0].x;
-    *xmax = points[0].x;
-    *ymin = points[0].y;
-    *ymax = points[0].y;
+void bounding_box(SDL_Point* points,int n,int* width,int* height){
+    int xmin = points[0].x;
+    int xmax = points[0].x;
+    int ymin = points[0].y;
+    int ymax = points[0].y;
     for (int i = 1; i < n;i++){
-        if (points[i].x < *xmin) *xmin = points[i].x;
-        if (points[i].x > *xmax) *xmax = points[i].x;
-        if (points[i].y < *ymin) *ymin = points[i].y;
-        if (points[i].y > *ymax) *ymax = points[i].y;
+        if (points[i].x < xmin) xmin = points[i].x;
+        if (points[i].x > xmax) xmax = points[i].x;
+        if (points[i].y < ymin) ymin = points[i].y;
+        if (points[i].y > ymax) ymax = points[i].y;
     }
+    *width = xmax - xmin + 20;
+    *height = ymax - ymin + 20;
 }
 
 
@@ -79,21 +81,4 @@ int find_pivot(SDL_Point* points,int n,SDL_Renderer* renderer,int radius){
     DrawCircle(renderer,minimum.x,minimum.y,green,radius);
     SDL_RenderPresent(renderer);
     return index;
-}
-
-
-
-/*
-Sorts an array of points with respect to the first point.
-*/
-int compare_qsort(const void* A,const void* B){ 
-    SDL_Point a = *(SDL_Point*)A;
-    SDL_Point b = *(SDL_Point*)B;
-    int o = orientation(pivot,a,b);
-    if (o == 0){ //colinear
-        if (dist_squared(pivot,b) >= dist_squared(pivot,a)) return -1;
-        return 1;
-    }
-    if (o == 2) return -1;
-    if (o == 1) return 1;
 }

@@ -47,3 +47,13 @@ SDL_Point* build_arr(FILE* f,int* n){
     }
     return points;
 }
+
+
+void write_out(SDL_Point* points,int n){
+    FILE* f = fopen("convex_hull_points.txt","r");
+    fprintf(f,"%d\n",n);
+    for (int i = 0; i < n;i++){
+        fprintf(f,"%d %d",points[i].x,points[i].y);
+    }
+    fclose(f);
+}

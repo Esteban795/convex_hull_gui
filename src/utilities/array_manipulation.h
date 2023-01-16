@@ -22,3 +22,6 @@ xn;yn
 and returns a SDL_Point* array which contains the points
 */
 SDL_Point* build_arr(FILE* f,int* n);
+
+
+void write_out(SDL_Point* points,int n);

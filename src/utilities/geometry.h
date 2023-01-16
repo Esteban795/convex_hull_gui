@@ -2,12 +2,12 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 #include "../SDL_utilities/color_related.c"
-#include "../convex_hull_gui.h"
+#include "convex_hull_gui.h"
 
 /*
-Gives xmin,ymin, xmax,ymax coordinates of a bounding rectangle (generally not the minimal one).
+Sets up width and height parameters to the maximum distance in x and y axis.
 */
-void bounding_box(SDL_Point* points,int n,int* xmin,int* xmax,int* ymin,int* ymax);
+void bounding_box(SDL_Point* points,int n,int* width,int* height);
 
 int dist_squared(SDL_Point A,SDL_Point B);
 
@@ -30,8 +30,3 @@ Searches for SDL_Point with minimal value with respect to (y,x) lexical order.
 Returns its index in 'points' array.
 */
 int find_pivot(SDL_Point* points,int n,SDL_Renderer* renderer,int radius);
-
-/*
-Sorts an array of points with respect to the first point.
-*/
-int compare_qsort(const void* A,const void* B);

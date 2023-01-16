@@ -1,5 +1,14 @@
 {
     "files.associations": {
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "sdl.h": "c",
+        "array_manipulation.h": "c",
+        "color_related.h": "c",
+        "convex_hull_gui.h": "c",
+        "custom_stack.h": "c",
+        "graham_scan.h": "c",
+        "geometry.h": "c",
+        "stdlib.h": "c",
+        "stdio.h": "c"
     }
 }
