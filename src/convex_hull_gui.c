@@ -384,9 +384,14 @@ int compare_qsort(const void* A,const void* B){
     if (o == 1) return 1;
 }
 
-void graham_scan(SDL_Point* points,int n,SDL_Renderer* renderer){
+void graham_scan(SDL_Renderer* renderer,SDL_Point* points,int n){
     int piv = find_pivot(points,n,renderer,RADIUS);
     SDL_Delay(1000);
+    SDL_SetRenderDrawColor(renderer,255,255,255,255);
+    for (int i = 0; i < n;i++){
+        DrawCircle(renderer,points[i].x,points[i].y,5);
+    }
+    SDL_RenderPresent(renderer);
     pivot = points[piv];
     swap(points,0,piv);
     qsort(points,n,sizeof(SDL_Point),compare_qsort);
@@ -440,7 +445,13 @@ void print_cam(camera cam){
     printf("Camera : x : %d, y : %d,width : %d, height %d, current_scale : %d\n",cam.source.x,cam.source.y,cam.source.w,cam.source.h,cam.current_scale);
 }
 
-void main_loop(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* points,int n){
+void main_loop(void* args){
+    thread_args data = *(thread_args*) args;
+    SDL_Point* points = data.points;
+    int n = data.n;
+    SDL_Renderer* renderer = data.renderer;
+    int TEXTURE_W = data.TEXTURE_W;
+    int TEXTURE_H = data.TEXTURE_H;
     SDL_Texture* texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_TARGET,TEXTURE_W + 100,TEXTURE_H + 100);
     camera cam = {.source = {WIDTH/4,WIDTH/4,WIDTH/16,HEIGHT/16}, .current_scale = 16};
     SDL_Rect dest = {10,10,WIDTH - 20,HEIGHT- 20};
@@ -452,7 +463,6 @@ void main_loop(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* poi
     SDL_RenderCopy(renderer,texture,&cam.source,&dest);
     SDL_RenderPresent(renderer);
     int running = 1;
-    //graham_scan(points,n,renderer);
     while (running){        
         while (SDL_PollEvent(&e)){
             if (e.type == SDL_QUIT) running = 0;
@@ -497,7 +507,6 @@ void main_loop(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* poi
                 }
             }
         }
-        
         SDL_SetRenderDrawColor(renderer,0,0,0,255);
         SDL_RenderDrawPoints(renderer,points,1000);
 
@@ -508,11 +517,11 @@ void main_loop(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* poi
         SDL_Delay(100);
     }
     SDL_DestroyTexture(texture);
-    
+    return NULL;
 }
+
+
 int main(int argc,char* argv[]){
-    pthread_t* threads = malloc(sizeof(pthread_t) * 2);
-    thread_args* threads_args = malloc(sizeof(thread_args) * 2);
     if (argc != 2) return EXIT_FAILURE;
     int n; //number of points
     FILE* in_f = fopen(argv[1],"r");
@@ -528,14 +537,8 @@ int main(int argc,char* argv[]){
         free(points);
         return EXIT_FAILURE;
     }
-    for (int i = 0; i < 2;i++){
-        threads_args[i].n = n;
-        threads_args[i].points = points;
-        threads_args[i].renderer = renderer;
-        threads_args[i].TEXTURE_H = TEXTURE_H;
-        threads_args[i].TEXTURE_W = TEXTURE_W;
-    }
-    pthread_create(&threads[0],NULL,threads)
+    graham_scan(renderer,points,n);
+
     SDL_Delay(200);
     //destroy part
     if (renderer != NULL) SDL_DestroyRenderer(renderer);
