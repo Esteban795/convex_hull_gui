@@ -6,9 +6,22 @@
 
 SDL_Point pivot;
 
-#define WIDTH 1500
-#define HEIGHT 1000
+#define WIDTH 800
+#define HEIGHT 800
 #define RADIUS 3 
+
+
+struct Camera {
+    SDL_Rect source;
+    float current_scale;
+};
+
+typedef struct Camera camera;
+
+int rand_between(int l, int r) {
+  return (int)( (rand() / (RAND_MAX * 1.0f)) * (r - l) + l);
+}
+
 
 typedef int T;
 
@@ -411,65 +424,66 @@ int start_SDL(SDL_Window** window,SDL_Renderer** renderer,int width,int height, 
 }
 
 void main_loop(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* points,int n){
-    SDL_Texture* camera = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_TARGET,TEXTURE_W,TEXTURE_H);
-    SDL_Rect source = {0,0,WIDTH / 32,HEIGHT / 32};
-    SDL_Rect dest = {10,10,WIDTH - 5,HEIGHT - 5};
+    SDL_Texture* texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_TARGET,TEXTURE_W,TEXTURE_H);
+    camera cam = {.source = {WIDTH/4,WIDTH/4,WIDTH/16,HEIGHT/16}, .current_scale = 1.0};
+    SDL_Rect dest = {10,10,WIDTH - 20,HEIGHT- 20};
     SDL_Event e;
-    SDL_SetRenderTarget(renderer,camera);
+    SDL_SetRenderTarget(renderer,texture);
     SDL_SetRenderDrawColor(renderer,255,255,255,255);
     SDL_RenderClear(renderer);
-    SDL_SetRenderDrawColor(renderer,255,255,255,255);
     SDL_RenderDrawPoints(renderer,points,n);
+    SDL_RenderCopy(renderer,texture,&cam.source,&dest);
     SDL_RenderPresent(renderer);
     int running = 1;
     //graham_scan(points,n,renderer);
-    while (running){
+    while (running){        
         while (SDL_PollEvent(&e)){
             if (e.type == SDL_QUIT) running = 0;
             if (e.type == SDL_KEYDOWN) {
                 switch (e.key.keysym.sym)
                 {
                 case SDLK_UP:
-                    if (source.y < -2) break;
-                    source.y -= 3;
+                    if (cam.source.y < -2) break;
+                    cam.source.y -= 3;
                     break;
                 case SDLK_DOWN:
-                    if (source.y > HEIGHT/source.h) break;
-                    source.y += 3;
+                    if (cam.source.y > HEIGHT/cam.current_scale) break;
+                    cam.source.y += 3;
                     break;
                 case SDLK_LEFT:
-                    if (source.x < -2) break;
-                    source.x -= 5;
+                    if (cam.source.x < -2) break;
+                    cam.source.x -= 5;
                     break;
                 case SDLK_RIGHT:
-                    printf("(Width,source.x) = (%d,%d)\n",WIDTH,source.x);
-                    if (source.x > WIDTH/source.w) break;
-                    source.x += 5;
+                    if (cam.source.x > WIDTH/cam.current_scale) break;
+                    cam.source.x += 5;
                     break;
                 case SDLK_1:
-                    source.w *= 2;
-                    source.h *= 2;
+                    cam.source.w *= 2;
+                    cam.source.h *= 2;
+                    cam.current_scale *= 2;
                     break;
                 case SDLK_2:
-                    source.w /= 2;
-                    source.h /= 2;
+                    cam.source.w /= 2;
+                    cam.source.h /= 2;
+                    cam.current_scale /= 2;
                     break;
                 default:
                     break;
                 }
             }
         }
-
         
         SDL_SetRenderDrawColor(renderer,0,0,0,255);
         SDL_RenderDrawPoints(renderer,points,1000);
 
         SDL_SetRenderTarget(renderer,NULL);
         SDL_SetRenderDrawColor(renderer,0,0,0,255);
-        SDL_RenderCopy(renderer,camera,&source,&dest);
+        SDL_RenderCopy(renderer,texture,&cam.source,&dest);
         SDL_RenderPresent(renderer);
         SDL_Delay(17);
     }
+    SDL_DestroyTexture(texture);
     
 }
 int main(int argc,char* argv[]){
@@ -489,12 +503,11 @@ int main(int argc,char* argv[]){
         return EXIT_FAILURE;
     }
     main_loop(renderer,TEXTURE_W,TEXTURE_H,points,n);
-    
+    SDL_Delay(5000);
     //destroy part
     if (renderer != NULL) SDL_DestroyRenderer(renderer);
     if  (window != NULL) SDL_DestroyWindow(window);
     free(points);
-    //free(res.arr);
     return EXIT_SUCCESS;
 }
 
