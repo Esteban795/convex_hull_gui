@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <SDL2/SDL_image.h>
 
-const int TEXTURE_H = 1000;
-const int TEXTURE_W = 1000;
+const int TEXTURE_H = 6000;
+const int TEXTURE_W = 6000;
 const int SCREEN_H = 800;
 const int SCREEN_W = 800;
 
@@ -21,6 +21,13 @@ typedef struct Camera camera;
 
 void print_cam(camera cam){
     printf("Camera : x : %d, y : %d,width : %d, height %d, current_scale : %d\n",cam.source.x,cam.source.y,cam.source.w,cam.source.h,cam.current_scale);
+}
+
+void update_screen(SDL_Renderer* renderer,SDL_Texture* texture,camera cam,SDL_Rect dest){
+    SDL_SetRenderTarget(renderer,NULL);
+    SDL_RenderCopy(renderer,texture,&(cam.source),&dest);
+    SDL_RenderPresent(renderer);
+    SDL_Delay(17);
 }
 
 void DrawCircle(SDL_Renderer * renderer, int32_t centreX, int32_t centreY, int32_t radius){
@@ -51,20 +58,6 @@ void DrawCircle(SDL_Renderer * renderer, int32_t centreX, int32_t centreY, int32
         error += (tx - diameter);
       }
    }
-}
-
-
-void update_screen(SDL_Renderer* renderer,camera cam,SDL_Rect dest,SDL_Texture* texture){
-        SDL_SetRenderTarget(renderer,texture);
-        SDL_SetRenderDrawColor(renderer,255,255,255,255);
-        SDL_RenderClear(renderer);
-    
-
-        SDL_SetRenderTarget(renderer,NULL);
-        SDL_SetRenderDrawColor(renderer,0,0,0,255);
-        SDL_RenderCopy(renderer,texture,&(cam.source),&dest);
-        SDL_RenderPresent(renderer);
-        SDL_Delay(17);
 }
 
 
@@ -173,12 +166,7 @@ int main(void){
         poll_events(&cam);
         SDL_RenderDrawLine(renderer,points[i].x,points[i].y,points[i + 1].x,points[i + 1].y);
         
-        SDL_SetRenderTarget(renderer,NULL);
-        SDL_SetRenderDrawColor(renderer,0,0,0,255);
-        SDL_RenderCopy(renderer,texture,&(cam.source),&dest);
-        SDL_RenderPresent(renderer);
-        SDL_Delay(17);
-        //update_screen(renderer,source,dest,texture);
+        update_screen(renderer,texture,cam,dest);
     }
     SDL_RenderPresent(renderer);
     /*
