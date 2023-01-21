@@ -39,12 +39,14 @@ int orientation(SDL_Point A,SDL_Point B, SDL_Point C){
 
 
 /*
-Modify points array to keep only points that form a unique angle with pivot
+Modify points array to keep only points that form a unique angle with pivot.
 */
-int ignore_colinear_points(SDL_Point* points,int n,SDL_Point pivot){
+int ignore_colinear_points(SDL_Renderer* renderer,SDL_Point* points,int n){
     int new_len = 1;
+    SDL_SetRenderDrawColor(renderer,0,0,255,128);
     for (int i = 1; i < n ;i++){
         while (i < n - 1 && orientation(pivot,points[i],points[i+ 1]) == 0){
+            SDL_RenderDrawPoint(renderer,points[i].x,points[i].y);
             i++;
         }
         points[new_len] = points[i];
@@ -69,16 +71,19 @@ bool comp(SDL_Point bottom_most,SDL_Point B){ //lexical order with (y,x) coordin
 Searches for SDL_Point with minimal value with respect to (y,x) lexical order.
 Returns its index in 'points' array.
 */
-int find_pivot(SDL_Point* points,int n,SDL_Renderer* renderer,int radius){
+int find_pivot(SDL_Point* points,int n,SDL_Renderer* renderer,camera* cam,SDL_Texture* texture,SDL_Rect dest){
     int index = 0;
     SDL_Point minimum = points[0];
     for (int i = 1; i < n;i++){
+        poll_events(renderer,texture,cam,dest);
         if (points[i].y < minimum.y || (points[i].y == minimum.y && points[i].x < minimum.y)){
             index = i;
             minimum = points[i];
         }
     }
-    DrawCircle(renderer,minimum.x,minimum.y,green,radius);
-    SDL_RenderPresent(renderer);
+    SDL_SetRenderTarget(renderer,texture);
+    SDL_SetRenderDrawColor(renderer,255,0,0,255);
+    DrawCircle(renderer,minimum.x,minimum.y,RADIUS);
+    update_screen(renderer,texture,*cam,dest);
     return index;
 }

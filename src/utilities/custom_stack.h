@@ -26,7 +26,7 @@ node* new_node(T d);
 
 custom_stack* stack_new(void);
 
-void free_stack(custom_stack* s);
+void stack_free(custom_stack* s);
 
 void stack_push(custom_stack* s,T data);
 

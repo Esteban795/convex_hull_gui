@@ -4,24 +4,6 @@
 // O(1) push and pop. O(n) space complexity
 // here, Ts will be ints because we're just storing array indexes.
 
-typedef int T;
-
-struct node {
-    T data;
-    struct node* next;
-};
-
-typedef struct node node;
-
-struct custom_stack {
-    int len;
-    node* top;
-};
-
-typedef struct custom_stack custom_stack;
-
-
-
 node* new_node(T d){
     node* n = malloc(sizeof(node));
     n->data = d;
@@ -42,7 +24,7 @@ void free_list(node* n){
     free(n);
 }
 
-void free_stack(custom_stack* s){
+void stack_free(custom_stack* s){
     free_list(s->top);
     free(s);
 }
@@ -106,6 +88,6 @@ T* stack_to_arr(custom_stack* s){
     for (int i = 0; i < s->len;i++){
         arr[i] = stack_pop(c);
     }
-    free_stack(c);
+    stack_free(c);
     return arr;
 }

@@ -12,7 +12,7 @@ void write_file(FILE* f,int n,int l,int r){
     for (int i = 0; i < n;i++){
         temp_1 = rand_between(l,r);
         temp_2 = rand_between(l,r);
-        fprintf(f,"%d %d\n",temp_1,temp_2);
+        fprintf(f,"%d;%d\n",temp_1,temp_2);
     }
 }
 

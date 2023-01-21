@@ -10,6 +10,8 @@
 #define RADIUS 10
 #define FPS 60
 
+#include "utilities/custom_stack.c"
+#include "utilities/array_manipulation.c"
 SDL_Point pivot;
 int running = 1;
 
@@ -82,120 +84,6 @@ void poll_events(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rec
     update_screen(renderer,texture,*cam,dest);
 }
 
-
-
-int rand_between(int l, int r) {
-  return (int)( (rand() / (RAND_MAX * 1.0f)) * (r - l) + l);
-}
-
-typedef int T;
-
-struct node {
-    T data;
-    struct node* next;
-};
-
-typedef struct node node;
-
-struct custom_stack {
-    int len;
-    node* top;
-};
-
-typedef struct custom_stack custom_stack;
-
-
-
-node* new_node(T d){
-    node* n = malloc(sizeof(node));
-    n->data = d;
-    n->next = NULL;
-    return n;
-}
-
-custom_stack* stack_new(void){
-    custom_stack* s = malloc(sizeof(custom_stack));
-    s->len = 0;
-    s->top = NULL;
-    return s;
-}
-
-void free_list(node* n){
-    if (n == NULL) return;
-    free_list(n->next);
-    free(n);
-}
-
-void free_stack(custom_stack* s){
-    free_list(s->top);
-    free(s);
-}
-
-void stack_push(custom_stack* s,T data){
-    node* n = new_node(data);
-    if (s->len > 0){
-        node* previous_top = s->top;
-        n->next = previous_top;
-    }
-    s->len++;
-    s->top = n;
-}
-
-T stack_pop(custom_stack* s){
-    assert(s->len > 0);
-    node* top = s->top;
-    T result = top->data;
-    s->top = top->next;
-    s->len = s->len - 1;
-    free(top);
-    return result;
-}
-
-T stack_peek(custom_stack* s){
-    assert(s->len >0);
-    return s->top->data;
-}
-
-T stack_peek_second(custom_stack* s){
-    assert(s->len > 1);
-    return s->top->next->data;
-}
-
-void add_rec(custom_stack* s,node* n){
-    if (n == NULL) return;
-    add_rec(s,n->next);
-    stack_push(s,n->data);
-}
-
-custom_stack* stack_copy(custom_stack* s){
-    custom_stack* new_stack = stack_new();
-    add_rec(new_stack,s->top);
-    return new_stack;
-}
-
-void print_rec(node* n){
-    if (n != NULL){
-        printf("Data : %d\n",n->data);
-        print_rec(n->next);
-    }
-}
-
-void stack_print(custom_stack* s){
-    print_rec(s->top);
-}
-
-T* stack_to_arr(custom_stack* s){
-    T* arr = malloc(sizeof(int) * s->len);
-    custom_stack* c = stack_copy(s);
-    for (int i = 0; i < s->len;i++){
-        arr[i] = stack_pop(c);
-    }
-    free_stack(c);
-    return arr;
-}
-
-
-
 SDL_Color orange = {255, 127, 40, 255};
 SDL_Color blue = {20, 20, 200, 255};
 SDL_Color red = {255, 10, 10, 255};
@@ -203,63 +91,6 @@ SDL_Color green = {10, 255, 10, 255};
 SDL_Color white = {255, 255, 255, 255};
 SDL_Color black = {0, 0, 0, 255};
 
-
-SDL_Point* copy_points(SDL_Point* points,int n){
-    SDL_Point* copy_arr = malloc(sizeof(SDL_Point) * n);
-    for (int  i = 0;i < n;i++){
-        SDL_Point p = {.x = points[i].x,.y = points[i].y};
-        copy_arr[i] = p;
-    }
-    return copy_arr;
-}
-
-void print_points_arr(SDL_Point* points, int n){
-    for (int i = 0; i < n;i++){
-        printf("Point (%d,%d)",points[i].x,points[i].y);
-    }
-}
-
-void swap(SDL_Point* points,int i, int j){
-    SDL_Point temp = points[i];
-    points[i] = points[j];
-    points[j] = temp;
-}
-
-
-
-/*
-Reads a file formatted as 
-
-n (number of points)
-x1;y1
-x2;y2
-.
-.
-xn;yn
-
-and returns a SDL_Point* array which contains the points
-*/
-SDL_Point* build_arr(FILE* f,int* n){
-    fscanf(f,"%d\n",n);
-    SDL_Point* points = malloc(*n * sizeof(SDL_Point));
-    int temp_x,temp_y;
-    for (int i = 0; i < *n;i++){
-        fscanf(f,"%d;%d\n",&temp_x,&temp_y);
-        SDL_Point p = {.x = temp_x,.y = temp_y};
-        points[i] = p;
-    }
-    return points;
-}
-
-
-void write_out(SDL_Point* points,int n){
-    FILE* f = fopen("convex_hull_points.txt","r");
-    fprintf(f,"%d\n",n);
-    for (int i = 0; i < n;i++){
-        fprintf(f,"%d %d",points[i].x,points[i].y);
-    }
-    fclose(f);
-}
 
 int start_SDL(SDL_Window** window,SDL_Renderer** renderer,int width,int height, const char* title){
     if (SDL_Init(SDL_INIT_VIDEO) != 0) return 1;
@@ -535,7 +366,7 @@ void graham_scan(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* p
     SDL_SetRenderTarget(renderer,texture);
     SDL_RenderDrawLine(renderer,convex_hull[0].x,convex_hull[0].y,convex_hull[s->len - 1].x,convex_hull[s->len - 1].y); //last line to close the hull.
     update_screen(renderer,texture,cam,dest);
-    free_stack(s);
+    stack_free(s);
     free(convex_hull);
     while (running){
         poll_events(renderer,texture,&cam,dest);
