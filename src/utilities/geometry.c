@@ -1,4 +1,78 @@
-#include "geometry.h"
+#include <SDL2/SDL.h>
+#include <stdbool.h>
+
+
+#define WIDTH 800
+#define HEIGHT 800
+#define RADIUS 10
+#define FPS 60
+
+SDL_Point pivot;
+int running = 1;
+
+
+struct Camera {
+    SDL_Rect source;
+    int current_scale;
+};
+
+typedef struct Camera camera;
+
+
+void update_screen(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest){
+    SDL_SetRenderTarget(renderer,NULL);
+    SDL_RenderCopy(renderer,texture,&(cam->source),&dest);
+    SDL_RenderPresent(renderer);
+    SDL_Delay((int)1000/FPS);
+}
+
+/*
+Polls events, mostly camera scrolling and zooming/dezooming for now.
+Returns true if it updated the screen.
+*/
+void poll_events(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest){
+    SDL_Event e;
+    while (SDL_PollEvent(&e)){
+        if (e.type == SDL_KEYDOWN) {
+            switch (e.key.keysym.sym) {
+                case SDLK_q:
+                    running = 0;
+                    break;
+                case SDLK_UP:
+                    if (cam->source.y < -2) break;
+                    cam->source.y -= 3;
+                    break;
+                case SDLK_DOWN:
+                    if (cam->source.y > cam->source.h * cam->current_scale) break;
+                    cam->source.y += 3;
+                    break;
+                case SDLK_LEFT:
+                    if (cam->source.x < -2) break;
+                    cam->source.x -= 5;
+                    break;
+                case SDLK_RIGHT:
+                    if (cam->source.x > cam->source.w * cam->current_scale) break;
+                    cam->source.x += 5;
+                    break;
+                case SDLK_1:
+                    if (cam->current_scale <= 1) break;
+                    cam->source.w *= 2;
+                    cam->source.h *= 2;
+                    cam->current_scale /= 2;
+                    break;
+                case SDLK_2:
+                    if (cam->current_scale > 32) break;
+                    cam->source.w /= 2;
+                    cam->source.h /= 2;
+                    cam->current_scale *= 2;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    update_screen(renderer,texture,cam,dest);
+}
 
 
 /*
@@ -83,7 +157,7 @@ int find_pivot(SDL_Point* points,int n,SDL_Renderer* renderer,camera* cam,SDL_Te
     }
     SDL_SetRenderTarget(renderer,texture);
     SDL_SetRenderDrawColor(renderer,255,0,0,255);
-    DrawCircle(renderer,minimum.x,minimum.y,RADIUS);
-    update_screen(renderer,texture,*cam,dest);
+    DrawCircle(renderer,minimum.x,minimum.y,10);
+    update_screen(renderer,texture,cam,dest);
     return index;
 }
