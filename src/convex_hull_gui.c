@@ -5,13 +5,14 @@
 #include <assert.h>
 #include <stdbool.h>
 
-
-SDL_Point pivot;
-
 #define WIDTH 800
 #define HEIGHT 800
 #define RADIUS 10
 #define FPS 60
+
+SDL_Point pivot;
+int running = 1;
+
 
 struct Camera {
     SDL_Rect source;
@@ -35,54 +36,50 @@ void update_screen(SDL_Renderer* renderer,SDL_Texture* texture,camera cam,SDL_Re
 Polls events, mostly camera scrolling and zooming/dezooming for now.
 Returns true if it updated the screen.
 */
-bool poll_events(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest,int* running){
+void poll_events(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest){
     SDL_Event e;
     while (SDL_PollEvent(&e)){
         if (e.type == SDL_KEYDOWN) {
-            if (e.type == SDL_QUIT) *running = 1;
-            switch (e.key.keysym.sym)
-            {
-            case SDLK_UP:
-                print_cam(*cam);
-                if (cam->source.y < -2) break;
-                cam->source.y -= 3;
-                break;
-            case SDLK_DOWN:
-                print_cam(*cam);
-                if (cam->source.y > cam->source.h * cam->current_scale) break;
-                cam->source.y += 3;
-                break;
-            case SDLK_LEFT:
-                print_cam(*cam);
-                if (cam->source.x < -2) break;
-                cam->source.x -= 5;
-                break;
-            case SDLK_RIGHT:
-                print_cam(*cam);
-                printf("\n");
-                if (cam->source.x > cam->source.w * cam->current_scale) break;
-                cam->source.x += 5;
-                break;
-            case SDLK_1:
-                if (cam->current_scale <= 2) break;
-                cam->source.w *= 2;
-                cam->source.h *= 2;
-                cam->current_scale /= 2;
-                break;
-            case SDLK_2:
-                if (cam->current_scale > 32) break;
-                cam->source.w /= 2;
-                cam->source.h /= 2;
-                cam->current_scale *= 2;
-                break;
-            default:
-                break;
+            switch (e.key.keysym.sym) {
+                case SDLK_q:
+                    running = 0;
+                    break;
+                case SDLK_UP:
+                    if (cam->source.y < -2) break;
+                    cam->source.y -= 3;
+                    break;
+                case SDLK_DOWN:
+                    if (cam->source.y > cam->source.h * cam->current_scale) break;
+                    cam->source.y += 3;
+                    break;
+                case SDLK_LEFT:
+                    if (cam->source.x < -2) break;
+                    cam->source.x -= 5;
+                    break;
+                case SDLK_RIGHT:
+                    if (cam->source.x > cam->source.w * cam->current_scale) break;
+                    cam->source.x += 5;
+                    break;
+                case SDLK_1:
+                    print_cam(*cam);
+                    if (cam->current_scale <= 1) break;
+                    cam->source.w *= 2;
+                    cam->source.h *= 2;
+                    cam->current_scale /= 2;
+                    break;
+                case SDLK_2:
+                    print_cam(*cam);
+                    if (cam->current_scale > 32) break;
+                    cam->source.w /= 2;
+                    cam->source.h /= 2;
+                    cam->current_scale *= 2;
+                    break;
+                default:
+                    break;
             }
-            update_screen(renderer,texture,*cam,dest);
-            return true;
         }
     }
-    return false;
+    update_screen(renderer,texture,*cam,dest);
 }
 
 
@@ -90,16 +87,6 @@ bool poll_events(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rec
 int rand_between(int l, int r) {
   return (int)( (rand() / (RAND_MAX * 1.0f)) * (r - l) + l);
 }
-
-struct thread_args {
-    SDL_Renderer* renderer;
-    SDL_Point* points;
-    int n;
-    int TEXTURE_W;
-    int TEXTURE_H;
-};
-
-typedef struct thread_args thread_args;
 
 typedef int T;
 
@@ -380,10 +367,13 @@ int orientation(SDL_Point A,SDL_Point B, SDL_Point C){
 /*
 Modify points array to keep only points that form a unique angle with pivot.
 */
-int ignore_colinear_points(SDL_Point* points,int n){
+int ignore_colinear_points(SDL_Renderer* renderer,SDL_Point* points,int n){
     int new_len = 1;
+    SDL_SetRenderDrawColor(renderer,0,0,255,128);
     for (int i = 1; i < n ;i++){
         while (i < n - 1 && orientation(pivot,points[i],points[i+ 1]) == 0){
+            printf("Point (%d,%d) and point (%d,%d) are colinear \n",points[i].x,points[i].y,points[i + 1].x,points[i + 1].y);
+            SDL_RenderDrawPoint(renderer,points[i].x,points[i].y);
             i++;
         }
         points[new_len] = points[i];
@@ -408,18 +398,20 @@ bool comp(SDL_Point bottom_most,SDL_Point B){ //lexical order with (y,x) coordin
 Searches for SDL_Point with minimal value with respect to (y,x) lexical order.
 Returns its index in 'points' array.
 */
-int find_pivot(SDL_Point* points,int n,SDL_Renderer* renderer,int radius,camera* cam,SDL_Texture* texture,SDL_Rect dest){
+int find_pivot(SDL_Point* points,int n,SDL_Renderer* renderer,camera* cam,SDL_Texture* texture,SDL_Rect dest){
     int index = 0;
     SDL_Point minimum = points[0];
     for (int i = 1; i < n;i++){
-        poll_events(renderer,texture,cam,dest,&index);
+        poll_events(renderer,texture,cam,dest);
         if (points[i].y < minimum.y || (points[i].y == minimum.y && points[i].x < minimum.y)){
             index = i;
             minimum = points[i];
         }
     }
-    DrawCircle(renderer,minimum.x,minimum.y,radius);
-    SDL_RenderPresent(renderer);
+    SDL_SetRenderTarget(renderer,texture);
+    SDL_SetRenderDrawColor(renderer,255,0,0,255);
+    DrawCircle(renderer,minimum.x,minimum.y,RADIUS);
+    update_screen(renderer,texture,*cam,dest);
     return index;
 }
 
@@ -429,24 +421,28 @@ int find_pivot(SDL_Point* points,int n,SDL_Renderer* renderer,int radius,camera*
 
 int apply_effect_on_condition(custom_stack* s,SDL_Renderer* renderer,SDL_Point* points,int i,SDL_Texture* texture,camera* cam,SDL_Rect dest){
     SDL_Point top = points[stack_peek(s)];
-    int random = 0;
     SDL_Point next_to_top = points[stack_peek_second(s)];
+
+    //Drawing a line between the three possible points that belongs to convex hull.
     SDL_SetRenderTarget(renderer,texture);
     SDL_SetRenderDrawColor(renderer,blue.r,blue.g,blue.b,blue.a);
     SDL_RenderDrawLine(renderer,top.x,top.y,points[i].x,points[i].y);
     SDL_RenderDrawLine(renderer,top.x,top.y,next_to_top.x,next_to_top.y);
     update_screen(renderer,texture,*cam,dest);
-    poll_events(renderer,texture,cam,dest,&random);
-    SDL_Delay(200);
-    int o = orientation(next_to_top,top,points[i]);
+
+    poll_events(renderer,texture,cam,dest);
+    SDL_Delay(100); //so people can actually watch what happens lol.
+    int o = orientation(next_to_top,top,points[i]); //Going counterclockwise => top isn't in convex hull.
     if (o != 2){
         SDL_SetRenderTarget(renderer,texture);
-        SDL_SetRenderDrawColor(renderer,0,0,0,255);
-        SDL_Delay(25);
+        SDL_SetRenderDrawColor(renderer,255,255,255,255);
         SDL_RenderDrawLine(renderer,top.x,top.y,next_to_top.x,next_to_top.y);
         SDL_RenderDrawLine(renderer,points[i].x,points[i].y,top.x,top.y);
-        if (!poll_events(renderer,texture,cam,dest,&random)) update_screen(renderer,texture,*cam,dest);
-        SDL_Delay(200);
+        SDL_SetRenderDrawColor(renderer,0,0,0,255);
+        SDL_RenderDrawPoint(renderer,points[i].x,points[i].y);
+        SDL_RenderDrawPoint(renderer,top.x,top.y);
+        SDL_RenderDrawPoint(renderer,next_to_top.x,next_to_top.y);
+        poll_events(renderer,texture,cam,dest);
     }
     return o;
 }
@@ -469,8 +465,9 @@ int compare_qsort(const void* A,const void* B){
 
 void graham_scan(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* points,int n){
     SDL_Texture* texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_TARGET,TEXTURE_W + 100,TEXTURE_H + 100);
-    camera cam = {.source = {WIDTH/4,WIDTH/4,WIDTH/1,HEIGHT/1}, .current_scale = 1}; //initial zoom at 16 scale, centered camera.
+    camera cam = {.source = {WIDTH/4,WIDTH/4,WIDTH/4,HEIGHT/4}, .current_scale = 4}; //initial zoom at 4 scale, centered camera.
     SDL_Rect dest = {10,10,WIDTH - 20,HEIGHT- 20};
+
     //Setup the window : white background
     SDL_SetRenderTarget(renderer,texture);
     SDL_SetRenderDrawColor(renderer,255,255,255,255);
@@ -478,21 +475,15 @@ void graham_scan(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* p
 
     //Drawing black points on the texture.
     SDL_SetRenderDrawColor(renderer,0,0,0,255);
-    for (int i = 0; i < n;i++){
-        DrawCircle(renderer,points[i].x,points[i].y,RADIUS);
-    }
+
+    SDL_RenderDrawPoints(renderer,points,n);
 
     SDL_SetRenderTarget(renderer,NULL);
     SDL_RenderCopy(renderer,texture,&(cam.source),&dest);
     SDL_RenderPresent(renderer);
-    SDL_Delay(5000);
-    int running = 1;
-    while (running){
-        poll_events(renderer,texture,&cam,dest,&running);
-    }
-    /*
+
     //Starting Graham's scan algorithm.
-    int piv = find_pivot(points,n,renderer,RADIUS,&cam,texture,dest);
+    int piv = find_pivot(points,n,renderer,&cam,texture,dest);
     pivot = points[piv];
     swap(points,0,piv);
 
@@ -501,13 +492,14 @@ void graham_scan(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* p
     qsort(points,n,sizeof(SDL_Point),compare_qsort);
 
     //Removing points that are colinear.Only keeps the farthest from pivot if there are colinear points.
-    int new_len = ignore_colinear_points(points,n);
+    SDL_SetRenderTarget(renderer,texture);
+    int new_len = ignore_colinear_points(renderer,points,n);
+    update_screen(renderer,texture,cam,dest);
     custom_stack* s = stack_new();
     stack_push(s,0);
     stack_push(s,1);
     stack_push(s,2);
     SDL_Delay(1000);
-
     for (int i = 3; i < new_len;i++){
         while (s->len > 1 && apply_effect_on_condition(s,renderer,points,i,texture,&cam,dest) != 2) {
             stack_pop(s);
@@ -528,66 +520,29 @@ void graham_scan(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* p
         convex_hull[i] = points[indexes[i]];
     }
     free(indexes);
-
-    DrawCircle(renderer,pivot.x,pivot.y,RADIUS);
+    
     SDL_SetRenderTarget(renderer,texture);
-    SDL_SetRenderDrawColor(renderer,white.r,white.g,white.b,white.a);
-    SDL_RenderDrawPoints(renderer,points + 1,n - 1);
+    SDL_SetRenderDrawColor(renderer,green.r,green.g,green.b,green.a);
 
-    SDL_SetRenderDrawColor(renderer,orange.r,orange.g,orange.b,orange.a);
+    //Draws circle on points that belongs to the convex hull.
     for (int i = 0; i < s->len - 1;i++){
         SDL_SetRenderTarget(renderer,texture);
         DrawCircle(renderer,convex_hull[i].x,convex_hull[i].y,RADIUS);
         SDL_RenderDrawLine(renderer,convex_hull[i].x,convex_hull[i].y,convex_hull[i + 1].x,convex_hull[i + 1].y);
-        SDL_SetRenderTarget(renderer,NULL);
-        if (!poll_events(renderer,texture,&cam,dest)) SDL_RenderPresent(renderer);
-        SDL_Delay(200);
+        poll_events(renderer,texture,&cam,dest);
+        SDL_Delay(100);
     }
     SDL_SetRenderTarget(renderer,texture);
-    SDL_RenderDrawLine(renderer,convex_hull[0].x,convex_hull[0].y,convex_hull[s->len - 1].x,convex_hull[s->len - 1].y);
-    SDL_SetRenderTarget(renderer,NULL);
-    SDL_RenderPresent(renderer);
+    SDL_RenderDrawLine(renderer,convex_hull[0].x,convex_hull[0].y,convex_hull[s->len - 1].x,convex_hull[s->len - 1].y); //last line to close the hull.
+    update_screen(renderer,texture,cam,dest);
     free_stack(s);
     free(convex_hull);
-    int running = 1;
-    while (running) {
+    while (running){
         poll_events(renderer,texture,&cam,dest);
-        while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT) running = 0;
-        }
     }
-    */
     SDL_DestroyTexture(texture);
 }
 //// SDL
-
-
-/*
-void main_loop(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* points,int n){
-
-    SDL_Event e;
-    SDL_SetRenderTarget(renderer,texture);
-    SDL_SetRenderDrawColor(renderer,255,255,255,255);
-    SDL_RenderClear(renderer);
-    SDL_RenderDrawPoints(renderer,points,n);
-    SDL_RenderCopy(renderer,texture,&(cam.source),&dest);
-    SDL_RenderPresent(renderer);
-    int running = 1;
-    while (running){        
-        
-        SDL_SetRenderDrawColor(renderer,0,0,0,255);
-        SDL_RenderDrawPoints(renderer,points,1000);
-
-        SDL_SetRenderTarget(renderer,NULL);
-        SDL_SetRenderDrawColor(renderer,0,0,0,255);
-        SDL_RenderCopy(renderer,texture,&(cam.source),&dest);
-        SDL_RenderPresent(renderer);
-        SDL_Delay(100);
-    }
-    SDL_DestroyTexture(texture);
-    return NULL;
-}
-*/
 
 int main(int argc,char* argv[]){
     if (argc != 2) return EXIT_FAILURE;
@@ -606,12 +561,12 @@ int main(int argc,char* argv[]){
         return EXIT_FAILURE;
     }
     graham_scan(renderer,TEXTURE_W,TEXTURE_H,points,n);
-
     if (renderer != NULL) SDL_DestroyRenderer(renderer);
     if  (window != NULL) SDL_DestroyWindow(window);
     free(points);
     return EXIT_SUCCESS;
 }
 
+//printf("BOUNDING BOX : w : %d, h : %d",TEXTURE_W,TEXTURE_H)
 
 //gcc convex_hull_gui.c -o chgui -Wall -Wextra -Wvla -fsanitize=address $(sdl2-config --cflags --libs) -lSDL2_image
