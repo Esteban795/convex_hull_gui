@@ -1,29 +1,11 @@
-#include <SDL2/SDL.h>
-#include <stdbool.h>
-
-
-#define WIDTH 800
-#define HEIGHT 800
-#define RADIUS 10
-#define FPS 60
-
-SDL_Point pivot;
-int running = 1;
-
-
-struct Camera {
-    SDL_Rect source;
-    int current_scale;
-};
-
-typedef struct Camera camera;
+#include "geometry.h"
 
 
 void update_screen(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest){
     SDL_SetRenderTarget(renderer,NULL);
     SDL_RenderCopy(renderer,texture,&(cam->source),&dest);
     SDL_RenderPresent(renderer);
-    SDL_Delay((int)1000/FPS);
+    SDL_Delay((int)(1000/IPS));
 }
 
 /*
@@ -36,7 +18,7 @@ void poll_events(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rec
         if (e.type == SDL_KEYDOWN) {
             switch (e.key.keysym.sym) {
                 case SDLK_q:
-                    running = 0;
+                    en_cours = 0;
                     break;
                 case SDLK_UP:
                     if (cam->source.y < -2) break;
@@ -157,7 +139,7 @@ int find_pivot(SDL_Point* points,int n,SDL_Renderer* renderer,camera* cam,SDL_Te
     }
     SDL_SetRenderTarget(renderer,texture);
     SDL_SetRenderDrawColor(renderer,255,0,0,255);
-    DrawCircle(renderer,minimum.x,minimum.y,10);
+    DrawCircle(renderer,minimum.x,minimum.y,RADIUS);
     update_screen(renderer,texture,cam,dest);
     return index;
 }

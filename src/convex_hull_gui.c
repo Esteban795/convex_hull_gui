@@ -7,29 +7,12 @@
 
 
 
-#include "utilities/custom_stack.c"
-#include "utilities/array_manipulation.c"
-#include "SDL_utilities/drawers.c"
-#include "utilities/geometry.c"
+#include "utilities/custom_stack.h"
+#include "utilities/array_manipulation.h"
+#include "SDL_utilities/drawers.h"
+#include "utilities/geometry.h"
 
 
-
-SDL_Color orange = {255, 127, 40, 255};
-SDL_Color blue = {20, 20, 200, 255};
-SDL_Color red = {255, 10, 10, 255};
-SDL_Color green = {10, 255, 10, 255};
-SDL_Color white = {255, 255, 255, 255};
-SDL_Color black = {0, 0, 0, 255};
-
-
-int start_SDL(SDL_Window** window,SDL_Renderer** renderer,int width,int height, const char* title){
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) return 1;
-    *window = SDL_CreateWindow(title,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,width,height,SDL_WINDOW_SHOWN);
-    if (*window == NULL) return 1;
-    *renderer = SDL_CreateRenderer(*window,-1,SDL_RENDERER_ACCELERATED);
-    if (*renderer == NULL) return 1;
-    return 0;
-}
 
 /*
 Animation of how Graham Scan algorithm actually works behind the scenes.
@@ -50,6 +33,24 @@ xn yn
 
 Not following this format will result in undefined behaviour. (because fscanf..)
 */
+
+
+SDL_Color orange = {255, 127, 40, 255};
+SDL_Color blue = {20, 20, 200, 255};
+SDL_Color red = {255, 10, 10, 255};
+SDL_Color green = {10, 255, 10, 255};
+SDL_Color white = {255, 255, 255, 255};
+SDL_Color black = {0, 0, 0, 255};
+
+
+int start_SDL(SDL_Window** window,SDL_Renderer** renderer,int width,int height, const char* title){
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) return 1;
+    *window = SDL_CreateWindow(title,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,width,height,SDL_WINDOW_SHOWN);
+    if (*window == NULL) return 1;
+    *renderer = SDL_CreateRenderer(*window,-1,SDL_RENDERER_ACCELERATED);
+    if (*renderer == NULL) return 1;
+    return 0;
+}
 
 
 int apply_effect_on_condition(custom_stack* s,SDL_Renderer* renderer,SDL_Point* points,int i,SDL_Texture* texture,camera* cam,SDL_Rect dest){
@@ -132,7 +133,7 @@ void graham_scan(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* p
     stack_push(s,0);
     stack_push(s,1);
     stack_push(s,2);
-    SDL_Delay(1000);
+    SDL_Delay(500);
     for (int i = 3; i < new_len;i++){
         while (s->len > 1 && apply_effect_on_condition(s,renderer,points,i,texture,&cam,dest) != 2) {
             stack_pop(s);
@@ -170,11 +171,13 @@ void graham_scan(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* p
     update_screen(renderer,texture,&cam,dest);
     stack_free(s);
     free(convex_hull);
-    while (running){
+    while (en_cours){
         poll_events(renderer,texture,&cam,dest);
     }
     SDL_DestroyTexture(texture);
 }
+
+
 
 int main(int argc,char* argv[]){
     if (argc != 2) return EXIT_FAILURE;
@@ -199,4 +202,4 @@ int main(int argc,char* argv[]){
     return EXIT_SUCCESS;
 }
 
-//gcc convex_hull_gui.c -o chgui -Wall -Wextra -Wvla -fsanitize=address $(sdl2-config --cflags --libs) -lSDL2_image
+//gcc convex_hull_gui.c ./utilities/custom_stack.c ./utilities/array_manipulation.c ./SDL_utilities/drawers.c ./utilities/geometry.c -o chgui -Wvla -Wall -Wextra -fsanitize=address $(sdl2-config --cflags --libs)
