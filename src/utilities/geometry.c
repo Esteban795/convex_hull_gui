@@ -17,9 +17,6 @@ void poll_events(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rec
     while (SDL_PollEvent(&e)){
         if (e.type == SDL_KEYDOWN) {
             switch (e.key.keysym.sym) {
-                case SDLK_q:
-                    en_cours = 0;
-                    break;
                 case SDLK_UP:
                     if (cam->source.y < -2) break;
                     cam->source.y -= 3;

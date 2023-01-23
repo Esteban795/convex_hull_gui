@@ -101,7 +101,8 @@ void graham_scan(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* p
     SDL_Texture* texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_TARGET,TEXTURE_W + 100,TEXTURE_H + 100);
     camera cam = {.source = {WIDTH/4,WIDTH/4,WIDTH/4,HEIGHT/4}, .current_scale = 4}; //initial zoom at 4 scale, centered camera.
     SDL_Rect dest = {10,10,WIDTH - 20,HEIGHT- 20};
-
+    int en_cours = 1;
+    SDL_Event e;
     //Setup the window : white background
     SDL_SetRenderTarget(renderer,texture);
     SDL_SetRenderDrawColor(renderer,255,255,255,255);
@@ -172,7 +173,18 @@ void graham_scan(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* p
     stack_free(s);
     free(convex_hull);
     while (en_cours){
-        poll_events(renderer,texture,&cam,dest);
+        while (SDL_PollEvent(&e)){
+            if (e.type == SDL_KEYDOWN){
+                switch (e.key.keysym.sym) {
+                    case SDLK_q:
+                        en_cours = 0;
+                        break;
+                    default:
+                        break;
+                }
+                poll_events(renderer,texture,&cam,dest);
+            }
+        }
     }
     SDL_DestroyTexture(texture);
 }
@@ -202,4 +214,4 @@ int main(int argc,char* argv[]){
     return EXIT_SUCCESS;
 }
 
-//gcc convex_hull_gui.c ./utilities/custom_stack.c ./utilities/array_manipulation.c ./SDL_utilities/drawers.c ./utilities/geometry.c -o chgui -Wvla -Wall -Wextra -fsanitize=address $(sdl2-config --cflags --libs)
+//gcc convex_hull_gui.c ./utilities/custom_stack.c ./utilities/array_manipulation.c ./SDL_utilities/drawers.c ./utilities/geometry.c -o chgui -Wvla -Wall -Wextra -fsanitize=address $(sdl2-config --cflags --libs) -lSDL2

@@ -1,8 +1,10 @@
-#ifndef GEOMETRY_H
-#define GEOMETRY_H
+#ifndef GEOMETRY_H_
+#define GEOMETRY_H_
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
+
+#include "../SDL_utilities/drawers.h"
 
 #define WIDTH 800
 #define HEIGHT 800
@@ -10,7 +12,6 @@
 #define IPS 60
 
 SDL_Point pivot;
-int en_cours = 1;
 
 
 struct Camera {
@@ -25,7 +26,6 @@ typedef struct Camera camera;
 void update_screen(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest);
 
 void poll_events(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest);
-
 
 int dist_squared(SDL_Point A,SDL_Point B);
 
