@@ -43,6 +43,9 @@ SDL_Color white = {255, 255, 255, 255};
 SDL_Color black = {0, 0, 0, 255};
 
 
+
+
+
 int start_SDL(SDL_Window** window,SDL_Renderer** renderer,int width,int height, const char* title){
     if (SDL_Init(SDL_INIT_VIDEO) != 0) return 1;
     *window = SDL_CreateWindow(title,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,width,height,SDL_WINDOW_SHOWN);
@@ -64,7 +67,7 @@ int apply_effect_on_condition(custom_stack* s,SDL_Renderer* renderer,SDL_Point* 
     SDL_RenderDrawLine(renderer,top.x,top.y,next_to_top.x,next_to_top.y);
     update_screen(renderer,texture,cam,dest);
 
-    poll_events(renderer,texture,cam,dest);
+    poll_events(renderer,texture,cam,dest,NULL);
     SDL_Delay(100); //so people can actually watch what happens lol.
     int o = orientation(next_to_top,top,points[i]); //Going counterclockwise => top isn't in convex hull.
     if (o != 2){
@@ -76,7 +79,7 @@ int apply_effect_on_condition(custom_stack* s,SDL_Renderer* renderer,SDL_Point* 
         SDL_RenderDrawPoint(renderer,points[i].x,points[i].y);
         SDL_RenderDrawPoint(renderer,top.x,top.y);
         SDL_RenderDrawPoint(renderer,next_to_top.x,next_to_top.y);
-        poll_events(renderer,texture,cam,dest);
+        poll_events(renderer,texture,cam,dest,NULL);
     }
     return o;
 }
@@ -95,14 +98,16 @@ int compare_qsort(const void* A,const void* B){
     }
     if (o == 2) return -1;
     if (o == 1) return 1;
+    return 0;
 }
+
 
 void graham_scan(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* points,int n){
     SDL_Texture* texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGBA8888,SDL_TEXTUREACCESS_TARGET,TEXTURE_W + 100,TEXTURE_H + 100);
     camera cam = {.source = {WIDTH/4,WIDTH/4,WIDTH/4,HEIGHT/4}, .current_scale = 4}; //initial zoom at 4 scale, centered camera.
     SDL_Rect dest = {10,10,WIDTH - 20,HEIGHT- 20};
-    int en_cours = 1;
-    SDL_Event e;
+    int RUNNING = 1;
+
     //Setup the window : white background
     SDL_SetRenderTarget(renderer,texture);
     SDL_SetRenderDrawColor(renderer,255,255,255,255);
@@ -164,7 +169,7 @@ void graham_scan(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* p
         SDL_SetRenderTarget(renderer,texture);
         DrawCircle(renderer,convex_hull[i].x,convex_hull[i].y,RADIUS);
         SDL_RenderDrawLine(renderer,convex_hull[i].x,convex_hull[i].y,convex_hull[i + 1].x,convex_hull[i + 1].y);
-        poll_events(renderer,texture,&cam,dest);
+        poll_events(renderer,texture,&cam,dest,NULL);
         SDL_Delay(100);
     }
     SDL_SetRenderTarget(renderer,texture);
@@ -172,19 +177,8 @@ void graham_scan(SDL_Renderer* renderer,int TEXTURE_W,int TEXTURE_H,SDL_Point* p
     update_screen(renderer,texture,&cam,dest);
     stack_free(s);
     free(convex_hull);
-    while (en_cours){
-        while (SDL_PollEvent(&e)){
-            if (e.type == SDL_KEYDOWN){
-                switch (e.key.keysym.sym) {
-                    case SDLK_q:
-                        en_cours = 0;
-                        break;
-                    default:
-                        break;
-                }
-                poll_events(renderer,texture,&cam,dest);
-            }
-        }
+    while (RUNNING){
+        poll_events(renderer,texture,&cam,dest,&RUNNING);
     }
     SDL_DestroyTexture(texture);
 }

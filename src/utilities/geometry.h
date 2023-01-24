@@ -25,7 +25,7 @@ typedef struct Camera camera;
 
 void update_screen(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest);
 
-void poll_events(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest);
+void poll_events(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest,int* running);
 
 int dist_squared(SDL_Point A,SDL_Point B);
 

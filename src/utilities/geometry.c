@@ -12,11 +12,15 @@ void update_screen(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_R
 Polls events, mostly camera scrolling and zooming/dezooming for now.
 Returns true if it updated the screen.
 */
-void poll_events(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest){
+void poll_events(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest,int* running){
     SDL_Event e;
     while (SDL_PollEvent(&e)){
         if (e.type == SDL_KEYDOWN) {
             switch (e.key.keysym.sym) {
+                case SDLK_q:
+                    if (running == NULL) return;
+                    *running = 0;
+                    break;
                 case SDLK_UP:
                     if (cam->source.y < -2) break;
                     cam->source.y -= 3;
@@ -88,6 +92,7 @@ int orientation(SDL_Point A,SDL_Point B, SDL_Point C){
     if (res == 0) return 0;
     if (res > 0) return 1;
     if (res < 0) return 2;
+    return 0;
 }
 
 
@@ -128,7 +133,7 @@ int find_pivot(SDL_Point* points,int n,SDL_Renderer* renderer,camera* cam,SDL_Te
     int index = 0;
     SDL_Point minimum = points[0];
     for (int i = 1; i < n;i++){
-        poll_events(renderer,texture,cam,dest);
+        poll_events(renderer,texture,cam,dest,NULL);
         if (points[i].y < minimum.y || (points[i].y == minimum.y && points[i].x < minimum.y)){
             index = i;
             minimum = points[i];
