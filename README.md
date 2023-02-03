@@ -81,6 +81,20 @@ make clean
 ```
 after you're done with it, to remove the binary file from your system.
 
+
+## How to use it ?
+
+| Keys        | What they do                  |
+|-------------|-------------------------------|
+| UP_ARROW    | Moves the figure upwards      |
+| DOWN_ARROW  | Moves the figure downwards    |
+| LEFT_ARROW  | Moves the figure to the left  |
+| RIGHT_ARROW | Moves the figure to right     |
+| Q           | Quit the program              |
+| 1           | Zooms out                     |
+| 2           | Zooms in                      |
+
+
 ## *What's left to do ?*
 
 - A proper animation-not-tied-to-framerate system (I'll need to figure this one out later..)
