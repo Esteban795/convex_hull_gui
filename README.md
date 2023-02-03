@@ -2,6 +2,10 @@
 
 Hey, welcome to this page.
 
+## Warning
+
+- You might encounter memory leaks when closing the program. It depends, as it seems, whether you use a Nvidia graphics card with SDL2. I'm not entirely sure what is causing them behind the scenes, but I can't seem to fix it. There are **zero** (at least I hope) memory leaks that are caused by myself in this program. Here is a [link](https://forums.developer.nvidia.com/t/asan-reports-memory-leak-in-libnvidia-glcore-so-515-57/222697/2) that could explain you the situation.
+
 ## Motivation 
 
 I recently felt very interested (for some reasons, don't ask me why, I don't know either) in computational geometry. So I decided to learn some basics algorithm, and I heard of Convex hull problem (I knew already what it was thanks to math classes) and well, I wanted to make my own, and use C at the same time, a language I'm currently learning as part of studies.
@@ -77,7 +81,7 @@ make clean
 ```
 after you're done with it, to remove the binary file from your system.
 
-## What's left to do ?
+## *What's left to do ?*
 
 - A proper animation-not-tied-to-framerate system (I'll need to figure this one out later..)
 
