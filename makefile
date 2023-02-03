@@ -10,8 +10,8 @@ DEPENDANCES = $(SRCDIR)/utilities/custom_stack.c $(SRCDIR)/utilities/array_manip
 build:
 	gcc $(SRCDIR)/convex_hull_gui.c -o $(LIBDIR)/convex_hull_gui $(CFLAGS) $(DEPENDANCES)
 
-run: $(SRCDIR)/convex_hull_gui
-	$(SRCDIR)/convex_hull_gui $(SRCDIR)/test.txt
+run : $(SRCDIR)/convex_hull_gui
+	$(SRCDIR)/convex_hull_gui $(PATH)
 
 randomize_points: file_generator.c 
 	gcc $(SRCDIR)/utilities/file_generator.c -o $(SRCDIR)/utilities/fg
