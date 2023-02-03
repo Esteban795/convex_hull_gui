@@ -1,4 +1,4 @@
-#include "array_manipulation.h"
+#include "../../include/array_manipulation.h"
 
 //Self explanatory..
 SDL_Point* copy_points(SDL_Point* points,int n){

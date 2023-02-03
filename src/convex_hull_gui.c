@@ -7,10 +7,11 @@
 
 
 
-#include "utilities/custom_stack.h"
-#include "utilities/array_manipulation.h"
-#include "SDL_utilities/drawers.h"
-#include "utilities/geometry.h"
+#include "../include/array_manipulation.h"
+#include "../include/custom_stack.h"
+#include "../include/geometry.h"
+#include "../include/drawers.h"
+
 
 
 
@@ -41,9 +42,6 @@ SDL_Color red = {255, 10, 10, 255};
 SDL_Color green = {10, 255, 10, 255};
 SDL_Color white = {255, 255, 255, 255};
 SDL_Color black = {0, 0, 0, 255};
-
-
-
 
 
 int start_SDL(SDL_Window** window,SDL_Renderer** renderer,int width,int height, const char* title){

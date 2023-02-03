@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 
-#include "../SDL_utilities/drawers.h"
+#include "drawers.h"
 
 #define WIDTH 800
 #define HEIGHT 800

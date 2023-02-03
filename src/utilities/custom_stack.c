@@ -1,4 +1,4 @@
-#include "custom_stack.h"
+#include "../../include/custom_stack.h"
 
 //T-type custom_stack implementation, using linked lists.
 // O(1) push and pop. O(n) space complexity

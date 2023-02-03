@@ -1,4 +1,4 @@
-#include "geometry.h"
+#include "../../include/geometry.h"
 
 
 void update_screen(SDL_Renderer* renderer,SDL_Texture* texture,camera* cam,SDL_Rect dest){
